@@ -1,9 +1,7 @@
 import {Response, Router} from "express";
 import {ObjectId, WithId} from "mongodb";
-import {Result, ValidationError} from "express-validator";
 import {errorsMiddleware, idValidation, postInputValidationBodyMiddleware} from '../../middlewares/errorsMiddleware';
 import {HTTP_STATUSES} from "../../status.code";
-import {db} from "../../db/db";
 import {BlogType, PostType, RequestWithBody, RequestWithParams, RequestWithParamsAndBody} from "../../types/types";
 import {CreatePostModel} from "../../features/posts/models/CreatePostModel";
 import {authMiddleware} from "../../middlewares/authMiddleware";
@@ -145,6 +143,7 @@ export const postsController = {
                 )
                 if (foundPost.matchedCount===0) {
                     res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
+                    return
                 }
 
                 res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)

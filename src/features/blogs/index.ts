@@ -80,6 +80,7 @@ export const blogsController = {
             const blogId = req.params.id;
             if (!blogId) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Bad Request"})
+                return
             }
             const findBlogById = await blogCollection.findOne({_id: new ObjectId(blogId)})
 

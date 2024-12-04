@@ -2,12 +2,15 @@ import {Response, Router} from "express";
 import {ObjectId, WithId} from "mongodb";
 import {errorsMiddleware, idValidation, postInputValidationBodyMiddleware} from '../../middlewares/errorsMiddleware';
 import {HTTP_STATUSES} from "../../status.code";
-import {BlogType, PostType, RequestWithBody, RequestWithParams, RequestWithParamsAndBody} from "../../types/types";
+import {postsFromDB, PostType, RequestWithBody, RequestWithParams, RequestWithParamsAndBody} from "../../types/types";
 import {CreatePostModel} from "../../features/posts/models/CreatePostModel";
 import {authMiddleware} from "../../middlewares/authMiddleware";
 import {PostParamsType} from "../../features/posts/models/URIParamsPostIdModels";
 import {UpdatePostModel} from "../../features/posts/models/UpdatePostModel";
-import {blogCollection, postCollection} from "../../db/mongo.db";
+import {paginationQueries} from "../../helpers/paginationQuereis";
+import {servicePosts} from "./service.posts";
+import {serviceBlogs} from "../../features/blogs/service.blogs";
+import {repositoryPosts} from "../../features/posts/repository.posts";
 
 
 export const postsRouter = Router()
@@ -28,19 +31,37 @@ const getPostViewModel = (dbPost: WithId<PostType>): PostType => {
 
 export const postsController = {
 
-    getPosts: async (req: any, res: Response<PostType[] | { error: string }>) => {
+    getPosts: async (req: any, res: Response<postsFromDB | { error: string }>) => {
 
         try {
+            const {
+                pageSize,
+                sortBy,
+                pageNumber,
+                sortDirection,
+            } = paginationQueries(req)
 
-            const posts = await postCollection.find({}).toArray()
+            const postsFromDB = await servicePosts.getPosts(
+                pageNumber,
+                pageSize,
+                sortBy,
+                sortDirection
+            )
+
             res
                 .status(HTTP_STATUSES.OK_200)
-                .json(posts.map(getPostViewModel))
+                .json({
+                    pagesCount: postsFromDB.pageCount,
+                    page: postsFromDB.page,
+                    pageSize: postsFromDB.pageSize,
+                    totalCount: postsFromDB.totalCount,
+                    items: postsFromDB.items.map(getPostViewModel)
+                })
             return
 
         } catch (e) {
             console.error("Error fetching posts:", e);
-            res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({ error: "Internal Server Error" });
+            res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({error: "Internal Server Error"});
             return;
         }
 
@@ -51,13 +72,17 @@ export const postsController = {
             const blogId = req.body.blogId;
 
             if (!ObjectId.isValid(blogId)) {
-                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Invalid blog ID"});
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: "Invalid blog ID"});
                 return
             }
 
-            const blogForNewPost = await blogCollection.findOne<WithId<BlogType>>({_id: new ObjectId(blogId)})
+            const blogForNewPost = await serviceBlogs.findBlog(blogId)
             if (!blogForNewPost) {
-                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find blog"})
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: "Cannot find blog"})
                 return;
             }
             const newPost: PostType = {
@@ -70,15 +95,18 @@ export const postsController = {
 
             }
 
-            const result = await postCollection.insertOne(newPost)
+            const {result,createdNewPost}= await servicePosts.createPost(newPost,)
+
             if (!result.insertedId) {
-                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: 'Cannot create Post'})
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: 'Cannot create Post'})
                 return
             }
-
-            const createdNewPost = await postCollection.findOne<WithId<PostType>>({_id: result.insertedId})
             if (!createdNewPost) {
-                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: 'Cannot find Post'})
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: 'Cannot find Post'})
                 return
             }
 
@@ -90,7 +118,9 @@ export const postsController = {
 
         } catch (e) {
             console.error("Error creating post:", e);
-            res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({ error: "Internal Server Error" });
+            res
+                .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                .json({error: "Internal Server Error"});
             return
 
         }
@@ -103,17 +133,17 @@ export const postsController = {
 
             const postId = req.params.id;
             if (!ObjectId.isValid(postId)) {
-                res.status(HTTP_STATUSES.NOT_FOUND_404).json({ error: "Invalid post ID" });
+                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Invalid post ID"});
                 return;
             }
 
-            const findPostsById = await postCollection.findOne({_id: new ObjectId(postId)})
+            const findPostsById = await repositoryPosts.findPostByPostId(postId)
 
 
-            if (!findPostsById ) {
+            if (!findPostsById) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
-                    .json({ error: "Post not found" })
+                    .json({error: "Post not found"})
                 return
             }
 
@@ -124,7 +154,9 @@ export const postsController = {
 
         } catch (e) {
             console.error("Error finding post:", e);
-            res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({ error: "Internal Server Error" });
+            res
+                .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                .json({error: "Internal Server Error"});
             return
 
         }
@@ -137,11 +169,8 @@ export const postsController = {
             try {
                 const postId = req.params.id;
 
-                const foundPost = await postCollection.updateOne(
-                    {_id: new ObjectId(postId)},
-                    {$set: {...req.body}},
-                )
-                if (foundPost.matchedCount===0) {
+                const foundPost = await servicePosts.updatePost(postId,req.body);
+                if (foundPost.matchedCount === 0) {
                     res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
                     return
                 }
@@ -151,7 +180,7 @@ export const postsController = {
 
             } catch (e) {
                 console.error("Error updating post:", e);
-                res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({ error: "Internal Server Error" });
+                res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({error: "Internal Server Error"});
                 return
             }
 
@@ -162,18 +191,18 @@ export const postsController = {
         async (req: RequestWithParams<PostParamsType>, res: any) => {
             try {
                 const postId = req.params.id;
-              const resDelete =  await postCollection.deleteOne({_id: new ObjectId(postId)});
-                if(resDelete.deletedCount === 0) {
+                const resDelete = await servicePosts.deletePost(postId);
+                if (resDelete.deletedCount === 0) {
                     res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Dont founded post"})
                     return
                 }
                 res
                     .sendStatus(HTTP_STATUSES.NO_CONTENT_204)
-                    return
+                return
 
             } catch (e) {
                 console.error("Error deleting post:", e);
-                res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({ error: "Internal Server Error" });
+                res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({error: "Internal Server Error"});
                 return
             }
         },

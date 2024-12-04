@@ -1,20 +1,20 @@
 import {Response, Router} from "express";
 import {blogInputValidationBodyMiddleware, errorsMiddleware, idValidation} from '../../middlewares/errorsMiddleware';
 import {HTTP_STATUSES} from "../../status.code";
-import {BlogType, RequestWithBody, RequestWithParams, RequestWithParamsAndBody} from "../../types/types";
+import {blogsFromDB, BlogType, RequestWithBody, RequestWithParams, RequestWithParamsAndBody} from "../../types/types";
 import {authMiddleware} from "../../middlewares/authMiddleware";
 import {CreateBlogModel} from "../../features/blogs/models/CreateBlogModel";
 import {BlogParamsType} from "../../features/blogs/models/URIParamsBlogIdModels";
 import {UpdateBlogModel} from "../../features/blogs/models/UpdateBlogModel";
-import {blogCollection} from "../../db/mongo.db";
-import {ObjectId, WithId} from "mongodb";
+import {WithId} from "mongodb";
+import {serviceBlogs} from "./service.blogs";
+import {paginationQueries} from "../../helpers/paginationQuereis";
 
 export const blogsRouter = Router()
 
 
 const getBlogViewModel = (dbBlog: WithId<BlogType>): BlogType => {
     return {
-
         id: dbBlog._id.toString(),
         name: dbBlog.name,
         description: dbBlog.description,
@@ -25,27 +25,56 @@ const getBlogViewModel = (dbBlog: WithId<BlogType>): BlogType => {
 }
 
 export const blogsController = {
+    //RequestWithQuery<QueryBlogModel>
 
-    getBlogs: async (_: any, res: Response<BlogType[] | { error: string }>) => {
+    getBlogs: async (req: any, res: Response<blogsFromDB | { error: string }>): Promise<void> => {
         try {
-            const blogs = await blogCollection.find({}).toArray();
 
+            const {
+                pageSize,
+                sortBy,
+                pageNumber,
+                sortDirection,
+                searchNameTerm
+            } = paginationQueries(req)
+
+            const blogsFromDB = await serviceBlogs.getBlogs(
+                pageNumber,
+                pageSize,
+                sortBy,
+                sortDirection,
+                searchNameTerm
+            )
+            if(!blogsFromDB) {
+                res.status(404).json({'error': 'Blog not found'})
+                return
+            }
             res
                 .status(HTTP_STATUSES.OK_200)
-                .json(blogs.map(getBlogViewModel))
+                .json({
+                    pagesCount: blogsFromDB.pageCount,
+                    page: blogsFromDB.page,
+                    pageSize: blogsFromDB.pageSize,
+                    totalCount: blogsFromDB.totalCount,
+                    items: blogsFromDB.items.map(getBlogViewModel)
+                })
             return
         } catch (e) {
+
             res.status(HTTP_STATUSES.BAD_REQUEST_400).json({
                 error: "Bad Request"
             })
             return
         }
+
+
     },
 
     createBlog: async (req: RequestWithBody<CreateBlogModel>, res: Response<BlogType | { error: string }>) => {
 
 
         try {
+
             const newBlogModel: BlogType = {
                 name: req.body.name,
                 description: req.body.description,
@@ -54,14 +83,18 @@ export const blogsController = {
                 isMembership: false
             }
 
-            const result = await blogCollection.insertOne(newBlogModel)
-            if(!result.insertedId) {
-                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+
+
+            const {result,newBlog} = await serviceBlogs.createBlog(newBlogModel)
+
+            if (!result.insertedId) {
+                res
+                    .sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
             }
-            const newBlog = await blogCollection.findOne({_id: result.insertedId})
-            if(!newBlog) {
-                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+            if (!newBlog) {
+                res
+                    .sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
             }
 
@@ -71,7 +104,9 @@ export const blogsController = {
             return
 
         } catch (e) {
-            res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({ error: "Internal Server Error" });
+            res
+                .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                .json({error: "Internal Server Error"});
             return
         }
     },
@@ -79,13 +114,18 @@ export const blogsController = {
         try {
             const blogId = req.params.id;
             if (!blogId) {
-                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Bad Request"})
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: "Bad Request"})
                 return
             }
-            const findBlogById = await blogCollection.findOne({_id: new ObjectId(blogId)})
+            const findBlogById = await serviceBlogs.findBlog(blogId)
+
 
             if (!findBlogById) {
-                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: 'Blog didnt find'})
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: 'Blog didnt find'})
                 return
             }
             res
@@ -93,7 +133,9 @@ export const blogsController = {
                 .json(getBlogViewModel(findBlogById));
             return
         } catch (e) {
-            res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({ error: "Internal Server Error" });
+            res
+                .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                .json({error: "Internal Server Error"});
             return
         }
 
@@ -106,12 +148,22 @@ export const blogsController = {
         try {
             const blogId = req.params.id;
             if (!blogId) {
-                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Bad Request"})
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: "Bad Request"})
                 return
             }
-             const resUpdate = await blogCollection.updateOne({_id: new ObjectId(blogId)}, {$set: {...req.body}});
-            if(resUpdate.matchedCount === 0) {
-                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Bad Request"})
+
+            const newBody: UpdateBlogModel ={
+                name: req.body.name,
+                description: req.body.description,
+                websiteUrl: req.body.websiteUrl,
+            }
+            const resUpdate = await serviceBlogs.updateBlog(blogId, newBody);
+            if (resUpdate.matchedCount === 0) {
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: "Bad Request"})
                 return
             }
             res
@@ -119,7 +171,9 @@ export const blogsController = {
             return
 
         } catch (e) {
-            res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({ error: "Internal Server Error" });
+            res
+                .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                .json({error: "Internal Server Error"});
             return
         }
 
@@ -129,9 +183,11 @@ export const blogsController = {
 
         try {
             const blogId = req.params.id;
-           const resDelete =  await blogCollection.deleteOne({_id: new ObjectId(blogId)});
-            if(resDelete.deletedCount === 0) {
-                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Dont founded blog"})
+            const resDelete = await serviceBlogs.deleteBlog(blogId);
+            if (resDelete.deletedCount === 0) {
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: "Dont founded blog"})
                 return
             }
             res
@@ -139,7 +195,9 @@ export const blogsController = {
             return
         } catch (e) {
 
-            res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({ error: "Internal Server Error" });
+            res
+                .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                .json({error: "Internal Server Error"});
             return
         }
 

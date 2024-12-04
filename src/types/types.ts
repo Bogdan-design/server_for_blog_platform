@@ -10,6 +10,22 @@ export type BlogType = {
     isMembership: boolean,
 }
 
+export type blogsFromDB = {
+    pagesCount: number,
+    page: number,
+    pageSize: number,
+    totalCount: number,
+    items: BlogType[],
+}
+
+export type postsFromDB = {
+    pagesCount: number,
+    page: number,
+    pageSize: number,
+    totalCount: number,
+    items: PostType[],
+}
+
 
 export type PostType = {
     id?: string;

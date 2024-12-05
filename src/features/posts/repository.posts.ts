@@ -9,8 +9,9 @@ export const repositoryPosts = {
         pageSize: number,
         sortBy: string,
         sortDirection: SortDirection,
+        blogId?:string,
     ) => {
-        const filter: any = {}
+        const filter: any = blogId ? {blogId: {$regex: blogId}} : {}
 
         return await postCollection
             .find(filter)
@@ -19,22 +20,23 @@ export const repositoryPosts = {
             .limit(pageSize)
             .toArray()
     },
-    getPostCount: async () => {
-        return await postCollection.countDocuments()
+    getPostCount: async (blogId?:string) => {
+        const filter: any = blogId ? {blogId: {$regex: blogId}} : {}
+        return await postCollection.countDocuments(filter)
     },
-    createPost: async (newPost:PostType) => {
-        return  await postCollection.insertOne(newPost)
+    createPost: async (newPost: PostType) => {
+        return await postCollection.insertOne(newPost)
     },
-    findPostByPostId: async (postId:string) => {
-        return await postCollection.findOne({_id:new ObjectId(postId)})
+    findPostByPostId: async (postId: string) => {
+        return await postCollection.findOne({_id: new ObjectId(postId)})
     },
-    updatePost: async (postId:string,newBodyPost:UpdatePostModel) => {
+    updatePost: async (postId: string, newBodyPost: UpdatePostModel) => {
         return await postCollection.updateOne(
             {_id: new ObjectId(postId)},
             {$set: {...newBodyPost}},
         )
     },
-    deletePost: async (postId:string) => {
+    deletePost: async (postId: string) => {
         return await postCollection.deleteOne({_id: new ObjectId(postId)})
     }
 }

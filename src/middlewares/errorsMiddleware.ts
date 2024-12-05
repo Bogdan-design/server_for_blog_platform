@@ -5,6 +5,15 @@ import {blogCollection} from "../db/mongo.db";
 import {ObjectId} from "mongodb";
 
 export const idValidation = param("id").notEmpty().isString()
+export const blogIdParamsValidation = param("blogId").notEmpty().isString().custom(
+    async (blogId: string) => {
+
+        const res = await blogCollection.findOne({_id: new ObjectId(blogId)})
+        if (!res) {
+            throw new Error("blogId not found")
+        }
+        return true
+    }).withMessage("Wrong blogId")
 
 export const blogIdValidation = body("blogId").notEmpty().isString().custom(
     async (blogId: string) => {
@@ -48,7 +57,7 @@ export const postInputValidationBodyMiddleware = [
     body("title").trim().notEmpty().isLength({max: 30}),
     body('shortDescription').trim().notEmpty().isString().isLength({max: 100}),
     body('content').trim().notEmpty().isString().isLength({max: 1000}),
-    blogIdValidation,
+
     errorsMiddleware
 ]
 

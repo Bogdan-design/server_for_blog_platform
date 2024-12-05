@@ -1,6 +1,11 @@
 import {Response, Router} from "express";
 import {ObjectId, WithId} from "mongodb";
-import {errorsMiddleware, idValidation, postInputValidationBodyMiddleware} from '../../middlewares/errorsMiddleware';
+import {
+    blogIdValidation,
+    errorsMiddleware,
+    idValidation,
+    postInputValidationBodyMiddleware
+} from '../../middlewares/errorsMiddleware';
 import {HTTP_STATUSES} from "../../status.code";
 import {postsFromDB, PostType, RequestWithBody, RequestWithParams, RequestWithParamsAndBody} from "../../types/types";
 import {CreatePostModel} from "../../features/posts/models/CreatePostModel";
@@ -11,12 +16,14 @@ import {paginationQueries} from "../../helpers/paginationQuereis";
 import {servicePosts} from "./service.posts";
 import {serviceBlogs} from "../../features/blogs/service.blogs";
 import {repositoryPosts} from "../../features/posts/repository.posts";
+import {newPostObject} from "../../helpers/newPostObject";
+import {CreatePostByBlogIdParamsModel} from "../../features/blogs/models/CreatePostByBlogIdParamsModel";
 
 
 export const postsRouter = Router()
 
 
-const getPostViewModel = (dbPost: WithId<PostType>): PostType => {
+export const getPostViewModel = (dbPost: WithId<PostType>): PostType => {
 
     return {
         id: dbPost._id.toString(),
@@ -46,6 +53,7 @@ export const postsController = {
                 pageSize,
                 sortBy,
                 sortDirection
+
             )
 
             res
@@ -67,9 +75,12 @@ export const postsController = {
 
     },
 
-    createPost: async (req: RequestWithBody<CreatePostModel>, res: Response<PostType | { error: string }>) => {
+    createPost: async (
+        req: RequestWithParamsAndBody<{blogId:string},CreatePostByBlogIdParamsModel>,
+
+        res: Response<PostType | { error: string }>) => {
         try {
-            const blogId = req.body.blogId;
+            const blogId = req.params.blogId || req.body.blogId;
 
             if (!ObjectId.isValid(blogId)) {
                 res
@@ -85,15 +96,7 @@ export const postsController = {
                     .json({error: "Cannot find blog"})
                 return;
             }
-            const newPost: PostType = {
-                title: req.body.title,
-                shortDescription: req.body.shortDescription,
-                content: req.body.content,
-                blogId: blogId,
-                blogName: blogForNewPost.name,
-                createdAt: new Date().toISOString()
-
-            }
+            const newPost = newPostObject(req,blogId, blogForNewPost)
 
             const {result,createdNewPost}= await servicePosts.createPost(newPost,)
 
@@ -212,10 +215,10 @@ export const postsController = {
 postsRouter
     .get('/', errorsMiddleware, postsController.getPosts);
 postsRouter
-    .post('/', authMiddleware, postInputValidationBodyMiddleware, postsController.createPost);
+    .post('/', authMiddleware,blogIdValidation, postInputValidationBodyMiddleware, postsController.createPost);
 postsRouter
     .get('/:id', idValidation, errorsMiddleware, postsController.findPost);
 postsRouter
-    .put('/:id', authMiddleware, idValidation, postInputValidationBodyMiddleware, postsController.updatePost);
+    .put('/:id', authMiddleware, idValidation,blogIdValidation, postInputValidationBodyMiddleware, postsController.updatePost);
 postsRouter
     .delete('/:id', authMiddleware, idValidation, postsController.deletePost);

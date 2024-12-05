@@ -1,7 +1,21 @@
 import {Response, Router} from "express";
-import {blogInputValidationBodyMiddleware, errorsMiddleware, idValidation} from '../../middlewares/errorsMiddleware';
+import {
+    blogIdParamsValidation,
+    blogInputValidationBodyMiddleware,
+    errorsMiddleware,
+    idValidation, postInputValidationBodyMiddleware
+} from '../../middlewares/errorsMiddleware';
 import {HTTP_STATUSES} from "../../status.code";
-import {blogsFromDB, BlogType, RequestWithBody, RequestWithParams, RequestWithParamsAndBody} from "../../types/types";
+import {
+    blogsFromDB,
+    BlogType,
+    postsFromDB,
+    PostType,
+    RequestWithBody,
+    RequestWithParams,
+    RequestWithParamsAndBody,
+    RequestWithParamsAndQuery
+} from "../../types/types";
 import {authMiddleware} from "../../middlewares/authMiddleware";
 import {CreateBlogModel} from "../../features/blogs/models/CreateBlogModel";
 import {BlogParamsType} from "../../features/blogs/models/URIParamsBlogIdModels";
@@ -9,6 +23,12 @@ import {UpdateBlogModel} from "../../features/blogs/models/UpdateBlogModel";
 import {WithId} from "mongodb";
 import {serviceBlogs} from "./service.blogs";
 import {paginationQueries} from "../../helpers/paginationQuereis";
+import {servicePosts} from "../../features/posts/service.posts";
+import {QueryPostModel} from "../../features/posts/models/QueryPostModels";
+import {getPostViewModel, postsController} from "../../features/posts";
+import {newPostObject} from "../../helpers/newPostObject";
+import {CreatePostByBlogIdParamsModel} from "../../features/blogs/models/CreatePostByBlogIdParamsModel";
+import {CreatePostModel} from "../../features/posts/models/CreatePostModel";
 
 export const blogsRouter = Router()
 
@@ -45,7 +65,7 @@ export const blogsController = {
                 sortDirection,
                 searchNameTerm
             )
-            if(!blogsFromDB) {
+            if (!blogsFromDB) {
                 res.status(404).json({'error': 'Blog not found'})
                 return
             }
@@ -84,8 +104,7 @@ export const blogsController = {
             }
 
 
-
-            const {result,newBlog} = await serviceBlogs.createBlog(newBlogModel)
+            const {result, newBlog} = await serviceBlogs.createBlog(newBlogModel)
 
             if (!result.insertedId) {
                 res
@@ -110,6 +129,51 @@ export const blogsController = {
             return
         }
     },
+    findAllPostsForBlog: async (req: RequestWithParamsAndQuery<{blogId:string},QueryPostModel>, res: Response<postsFromDB | {error: string}>) => {
+        try {
+        const blogId = req.params.blogId
+
+            const {
+                pageSize,
+                sortBy,
+                pageNumber,
+                sortDirection,
+            } = paginationQueries(req)
+
+
+            const foundAllPostsById = await servicePosts.getPosts(
+                pageNumber,
+                pageSize,
+                sortBy,
+                sortDirection,
+                blogId,
+            )
+
+            if (!foundAllPostsById) {
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: 'Blog not found'})
+                return
+            }
+                res
+                    .status(HTTP_STATUSES.OK_200)
+                    .json({
+                        pagesCount: foundAllPostsById.pageCount,
+                        page: foundAllPostsById.page,
+                        pageSize: foundAllPostsById.pageSize,
+                        totalCount: foundAllPostsById.totalCount,
+                        items: foundAllPostsById.items.map(getPostViewModel)
+                    })
+
+
+        } catch (e) {
+            res
+                .status(HTTP_STATUSES.NOT_FOUND_404)
+                .json({error: "Internal Server Error"})
+            return
+        }
+    },
+
     findBlog: async (req: RequestWithParams<BlogParamsType>, res: Response<BlogType | { error: string }>) => {
         try {
             const blogId = req.params.id;
@@ -154,7 +218,7 @@ export const blogsController = {
                 return
             }
 
-            const newBody: UpdateBlogModel ={
+            const newBody: UpdateBlogModel = {
                 name: req.body.name,
                 description: req.body.description,
                 websiteUrl: req.body.websiteUrl,
@@ -207,6 +271,8 @@ export const blogsController = {
 
 blogsRouter.get('/', errorsMiddleware, blogsController.getBlogs);
 blogsRouter.post('/', authMiddleware, blogInputValidationBodyMiddleware, blogsController.createBlog);
+blogsRouter.get('/:blogId/posts', blogIdParamsValidation, errorsMiddleware, blogsController.findAllPostsForBlog);
+blogsRouter.post('/:blogId/posts',authMiddleware,blogIdParamsValidation, postInputValidationBodyMiddleware, postsController.createPost);
 blogsRouter.get('/:id', idValidation, errorsMiddleware, blogsController.findBlog);
 blogsRouter.put('/:id', authMiddleware, idValidation, blogInputValidationBodyMiddleware, blogsController.updateBlog);
 blogsRouter.delete('/:id', authMiddleware, idValidation, blogsController.deleteBlog);

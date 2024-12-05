@@ -9,15 +9,17 @@ export const servicePosts = {
         pageSize: number,
         sortBy: string,
         sortDirection: SortDirection,
+        blogId?:string,
     ) => {
         const posts = await repositoryPosts.getPosts(
             pageNumber,
             pageSize,
             sortBy,
-            sortDirection
+            sortDirection,
+            blogId
         );
 
-        const postsCount = await repositoryPosts.getPostCount()
+        const postsCount = await repositoryPosts.getPostCount(blogId)
 
         return {
             pageCount: Math.ceil(postsCount / pageSize),

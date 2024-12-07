@@ -1,34 +1,27 @@
 import {Response, Router} from "express";
 import {
-    blogIdParamsValidation,
     blogInputValidationBodyMiddleware,
     errorsMiddleware,
-    idValidation, postInputValidationBodyMiddleware
+    idValidation,
+    postInputValidationBodyMiddleware
 } from '../../middlewares/errorsMiddleware';
 import {HTTP_STATUSES} from "../../status.code";
 import {
-    blogsFromDB,
     BlogType,
-    postsFromDB,
-    PostType,
+    ObjectModelFromDB, PostType,
     RequestWithBody,
     RequestWithParams,
-    RequestWithParamsAndBody,
-    RequestWithParamsAndQuery
+    RequestWithParamsAndBody
 } from "../../types/types";
 import {authMiddleware} from "../../middlewares/authMiddleware";
 import {CreateBlogModel} from "../../features/blogs/models/CreateBlogModel";
 import {BlogParamsType} from "../../features/blogs/models/URIParamsBlogIdModels";
 import {UpdateBlogModel} from "../../features/blogs/models/UpdateBlogModel";
-import {WithId} from "mongodb";
+import {ObjectId, WithId} from "mongodb";
 import {serviceBlogs} from "./service.blogs";
 import {paginationQueries} from "../../helpers/paginationQuereis";
 import {servicePosts} from "../../features/posts/service.posts";
-import {QueryPostModel} from "../../features/posts/models/QueryPostModels";
 import {getPostViewModel, postsController} from "../../features/posts";
-import {newPostObject} from "../../helpers/newPostObject";
-import {CreatePostByBlogIdParamsModel} from "../../features/blogs/models/CreatePostByBlogIdParamsModel";
-import {CreatePostModel} from "../../features/posts/models/CreatePostModel";
 
 export const blogsRouter = Router()
 
@@ -47,7 +40,7 @@ const getBlogViewModel = (dbBlog: WithId<BlogType>): BlogType => {
 export const blogsController = {
     //RequestWithQuery<QueryBlogModel>
 
-    getBlogs: async (req: any, res: Response<blogsFromDB | { error: string }>): Promise<void> => {
+    getBlogs: async (req: any, res: Response<ObjectModelFromDB<BlogType> | { error: string }>): Promise<void> => {
         try {
 
             const {
@@ -129,9 +122,16 @@ export const blogsController = {
             return
         }
     },
-    findAllPostsForBlog: async (req: RequestWithParamsAndQuery<{blogId:string},QueryPostModel>, res: Response<postsFromDB | {error: string}>) => {
+    findAllPostsForBlog: async (req: any, res: Response<ObjectModelFromDB<PostType> | {error: string}>) => {
+        //RequestWithParamsAndQuery<{blogId:string},QueryPostModel>
         try {
         const blogId = req.params.blogId
+            if (!blogId || typeof blogId !== "string" ||!ObjectId.isValid(blogId)) {
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: "Invalid blog ID"});
+                return
+            }
 
             const {
                 pageSize,
@@ -139,6 +139,12 @@ export const blogsController = {
                 pageNumber,
                 sortDirection,
             } = paginationQueries(req)
+
+            const foundBlog = await serviceBlogs.findBlog(blogId)
+            if (!foundBlog) {
+                res.status(HTTP_STATUSES.NOT_FOUND_404).json({'error': 'Blog not found'})
+                return
+            }
 
 
             const foundAllPostsById = await servicePosts.getPosts(
@@ -271,8 +277,8 @@ export const blogsController = {
 
 blogsRouter.get('/', errorsMiddleware, blogsController.getBlogs);
 blogsRouter.post('/', authMiddleware, blogInputValidationBodyMiddleware, blogsController.createBlog);
-blogsRouter.get('/:blogId/posts', blogIdParamsValidation, errorsMiddleware, blogsController.findAllPostsForBlog);
-blogsRouter.post('/:blogId/posts',authMiddleware,blogIdParamsValidation, postInputValidationBodyMiddleware, postsController.createPost);
+blogsRouter.get('/:blogId/posts', errorsMiddleware, blogsController.findAllPostsForBlog);
+blogsRouter.post('/:blogId/posts',authMiddleware,postInputValidationBodyMiddleware, postsController.createPost);
 blogsRouter.get('/:id', idValidation, errorsMiddleware, blogsController.findBlog);
 blogsRouter.put('/:id', authMiddleware, idValidation, blogInputValidationBodyMiddleware, blogsController.updateBlog);
 blogsRouter.delete('/:id', authMiddleware, idValidation, blogsController.deleteBlog);

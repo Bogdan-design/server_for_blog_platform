@@ -16,7 +16,7 @@ export const blogsRepository = {
         if (searchNameTerm !== null) {
             filter.name = {$regex: searchNameTerm, $options: 'i'};
         }
-        return blogCollection
+        return await blogCollection
             .find(filter)
             .sort({[sortBy]: sortDirection === 'asc' ? 'asc' : -1})
             .skip((pageNumber - 1) * pageSize)

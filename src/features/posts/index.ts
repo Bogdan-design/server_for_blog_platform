@@ -7,8 +7,7 @@ import {
     postInputValidationBodyMiddleware
 } from '../../middlewares/errorsMiddleware';
 import {HTTP_STATUSES} from "../../status.code";
-import {postsFromDB, PostType, RequestWithBody, RequestWithParams, RequestWithParamsAndBody} from "../../types/types";
-import {CreatePostModel} from "../../features/posts/models/CreatePostModel";
+import {ObjectModelFromDB, PostType, RequestWithParams, RequestWithParamsAndBody} from "../../types/types";
 import {authMiddleware} from "../../middlewares/authMiddleware";
 import {PostParamsType} from "../../features/posts/models/URIParamsPostIdModels";
 import {UpdatePostModel} from "../../features/posts/models/UpdatePostModel";
@@ -38,7 +37,7 @@ export const getPostViewModel = (dbPost: WithId<PostType>): PostType => {
 
 export const postsController = {
 
-    getPosts: async (req: any, res: Response<postsFromDB | { error: string }>) => {
+    getPosts: async (req: any, res: Response<ObjectModelFromDB<PostType> | { error: string }>) => {
 
         try {
             const {
@@ -82,7 +81,7 @@ export const postsController = {
         try {
             const blogId = req.params.blogId || req.body.blogId;
 
-            if (!ObjectId.isValid(blogId)) {
+            if (!blogId || typeof blogId !== "string" ||!ObjectId.isValid(blogId)) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
                     .json({error: "Invalid blog ID"});

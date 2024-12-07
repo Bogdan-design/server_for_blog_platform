@@ -1,6 +1,12 @@
-import {Request, Response} from 'express'
-import {ObjectId} from "mongodb";
+import {Request} from 'express'
 
+export type ObjectModelFromDB<T> = {
+    pagesCount: number,
+    page: number,
+    pageSize: number,
+    totalCount: number,
+    items: T[],
+}
 export type BlogType = {
     id?: string;
     name: string;
@@ -10,21 +16,6 @@ export type BlogType = {
     isMembership: boolean,
 }
 
-export type blogsFromDB = {
-    pagesCount: number,
-    page: number,
-    pageSize: number,
-    totalCount: number,
-    items: BlogType[],
-}
-
-export type postsFromDB = {
-    pagesCount: number,
-    page: number,
-    pageSize: number,
-    totalCount: number,
-    items: PostType[],
-}
 
 
 export type PostType = {
@@ -34,6 +25,13 @@ export type PostType = {
     content: string;
     blogId: string;
     blogName: string;
+    createdAt: string,
+}
+
+export type UserType = {
+    id?: string
+    login: string
+    email: string
     createdAt: string,
 }
 

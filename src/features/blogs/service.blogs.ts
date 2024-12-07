@@ -24,8 +24,6 @@ export const serviceBlogs = {
             searchNameTerm
         )
 
-        console.log(blogs)
-        console.log(blogsCount)
 
         return {
             pageCount: Math.ceil(blogsCount / pageSize),

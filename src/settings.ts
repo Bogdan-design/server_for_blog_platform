@@ -7,12 +7,14 @@ export const SETTINGS = {
     PATH:{
         BLOGS:'/blogs',
         POSTS:'/posts',
+        USERS:'/users',
         TESTING:'/testing',
     },
     AUTH_TOKEN:process.env.AUTH_TOKEN || 'admin:qwerty',
     MONGO_URI:process.env.MONGO_URL || 'mongodb://0.0.0.0:27017',
-    DB_NAME:'sprint_3',
+    DB_NAME:'Blogs_Platform',
     BLOG_COLLECTION_NAME:'blogs',
-    POST_COLLECTION_NAME:'posts'
+    POST_COLLECTION_NAME:'posts',
+    USERS_COLLECTION_NAME:'users',
 
 }

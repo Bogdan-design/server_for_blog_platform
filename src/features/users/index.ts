@@ -1,12 +1,21 @@
-import {Request, Response, Router} from "express";
+import {Response, Router} from "express";
 import {HTTP_STATUSES} from "../../status.code";
 import {paginationQueries, QueryModel} from "../../helpers/paginationQuereis";
-import {ObjectModelFromDB, RequestWithBody, RequestWithParams, RequestWithQuery, UserType} from "../../types/types";
+import {
+    ExpectedErrorObjectType,
+    ObjectModelFromDB,
+    RequestWithBody,
+    RequestWithParams,
+    RequestWithQuery,
+    UserType
+} from "../../types/types";
 import {serviceUsers} from "../../features/users/service.users";
 import {WithId} from "mongodb";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import {authMiddleware} from "../../middlewares/authMiddleware";
 import {UserId} from "../../features/users/models/URIParamsUserIdModel";
+import {idValidation, userInputValidationBodyMiddleware} from "../../middlewares/errorsMiddleware";
+import {repositoryUsers} from "../../features/users/repository.users";
 
 export const usersRouter = Router();
 
@@ -27,7 +36,7 @@ export const usersController = {
             const usersFromDB = await serviceUsers.getUsers(
                 paginationQueriesForUsers
             )
-            console.log(`controller :${usersFromDB}`)
+
 
             if (!usersFromDB) {
                 res
@@ -53,13 +62,30 @@ export const usersController = {
             return
         }
     },
-    createUser: async (req:RequestWithBody<CreateUserModel>, res: Response<UserType | {error: string}>) => {
+    createUser: async (req:RequestWithBody<CreateUserModel>, res: Response<UserType | {error: string} | ExpectedErrorObjectType>) => {
         try{
             const newUser: UserType = {
                 login: req.body.login,
                 email: req.body.email,
                 createdAt: new Date().toISOString()
             }
+
+            const uniqueLoginPassword = await repositoryUsers.getUser({login:req.body.login, password:req.body.password});
+
+            if(!uniqueLoginPassword) {
+                res
+                    .status(HTTP_STATUSES.UNAUTHORIZED_401)
+                    .json({
+                        errorsMessages: [
+                            {
+                                field: 'email', 
+                                message: 'email should be unique'
+                            }
+                        ]
+                    })
+                return
+            }
+
 
             const {result,newUserFromDB} = await serviceUsers.createUser(newUser)
             if (!result.insertedId) {
@@ -103,6 +129,8 @@ export const usersController = {
                     .json({error:"Not Found"})
                 return
             }
+            res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+            return
 
         }catch(e){
             res
@@ -114,5 +142,5 @@ export const usersController = {
 }
 
 usersRouter.get('/', usersController.getUsers)
-usersRouter.post('/',authMiddleware, usersController.createUser)
-usersRouter.delete('/:id',authMiddleware, usersController.deleteUser)
+usersRouter.post('/',authMiddleware,userInputValidationBodyMiddleware, usersController.createUser)
+usersRouter.delete('/:id',authMiddleware, idValidation, usersController.deleteUser)

@@ -21,8 +21,6 @@ export const repositoryUsers ={
         const filter: any = {}
         if (searchLoginTerm) filter.login = { $regex: searchLoginTerm, $options: "i" };
         if (searchEmailTerm) filter.email = { $regex: searchEmailTerm, $options: "i" }
-
-        console.log(filter)
         return await usersCollection.countDocuments(filter)
     },
     createUser: async (newUser:OptionalId<UserType>)=>{
@@ -30,6 +28,17 @@ export const repositoryUsers ={
     },
     getUserById: async (id:string)=>{
         return await usersCollection.findOne({_id: new ObjectId(id)})
+    },
+    getUser: async ({login,password}:{login:string,password:string})=>{
+
+        const filter: any = {}
+        if (login) filter.login = login;
+        if (password) filter.password = password;
+        const keys = Object.keys(filter);
+        if (keys.length === 0) {
+            return null;
+        }
+        return await usersCollection.findOne({ [keys[0]]: filter[keys[0]] })
     },
     deleteUserById: async (id:string)=>{
         return await usersCollection.deleteOne({_id: new ObjectId(id)})

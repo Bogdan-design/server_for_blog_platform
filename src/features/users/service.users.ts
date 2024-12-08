@@ -11,9 +11,7 @@ export const serviceUsers = {
         const {pageSize,pageNumber,searchLoginTerm,searchEmailTerm} =  paginationQueriesForUsers
 
         const users : WithId<UserType>[] = await repositoryUsers.getUsers(paginationQueriesForUsers)
-        console.log(users)
         const usersCount = await repositoryUsers.getUsersCount({searchLoginTerm,searchEmailTerm})
-        console.log(usersCount)
         return {
             pagesCount: Math.ceil(usersCount / pageSize),
             page: pageNumber,

@@ -64,13 +64,13 @@ export const usersController = {
     },
     createUser: async (req:RequestWithBody<CreateUserModel>, res: Response<UserType | {error: string} | ExpectedErrorObjectType>) => {
         try{
-            const newUser: UserType = {
-                login: req.body.login,
-                email: req.body.email,
-                createdAt: new Date().toISOString()
-            }
 
-            const uniqueLoginPassword = await repositoryUsers.getUser({login:req.body.login, password:req.body.password});
+
+            const uniqueLoginPassword = await serviceUsers.createUser({
+                login:req.body.login,
+                password:req.body.password,
+                email:req.body.email
+            });
 
             if(!uniqueLoginPassword) {
                 res
@@ -87,7 +87,6 @@ export const usersController = {
             }
 
 
-            const {result,newUserFromDB} = await serviceUsers.createUser(newUser)
             if (!result.insertedId) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)

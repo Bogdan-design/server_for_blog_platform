@@ -11,10 +11,12 @@
     "jest": "jest -i"
   },
   "dependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/jest": "^29.5.14",
     "@types/mongodb-memory-server": "^2.3.0",
     "@types/supertest": "^6.0.2",
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",

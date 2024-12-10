@@ -66,13 +66,27 @@ export const usersController = {
         try{
 
 
-            const uniqueLoginPassword = await serviceUsers.createUser({
+            const {isLogin,newUserFromDB,isEmail,result} = await serviceUsers.createUser({
                 login:req.body.login,
                 password:req.body.password,
                 email:req.body.email
             });
 
-            if(!uniqueLoginPassword) {
+            if(!isLogin) {
+                res
+                    .status(HTTP_STATUSES.UNAUTHORIZED_401)
+                    .json({
+                        errorsMessages: [
+                            {
+                                field: 'login',
+                                message: 'login should be unique'
+                            }
+                        ]
+                    })
+                return
+            }
+
+            if(!isEmail) {
                 res
                     .status(HTTP_STATUSES.UNAUTHORIZED_401)
                     .json({

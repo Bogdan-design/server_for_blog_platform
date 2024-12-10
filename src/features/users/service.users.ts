@@ -33,10 +33,21 @@ export const serviceUsers = {
             passwordHash,
             createdAt: new Date().toISOString()
         }
+
+        const isLogin = await this.checkCredentials(login, passwordHash)
+
+        const isEmail = await this.checkCredentials(email, passwordHash)
+
         const result = await repositoryUsers.createUser(newUser)
+
         const newUserFromDB = await repositoryUsers.getUserById(result.insertedId.toString())
 
-        return {result,newUserFromDB}
+        return {
+            result,
+            newUserFromDB,
+            isLogin,
+            isEmail
+        }
     },
     async deleteUserById(id: string) {
         const result = await repositoryUsers.deleteUserById(id)
@@ -45,7 +56,7 @@ export const serviceUsers = {
     async _generateHash(password: string, salt: string) {
         return await bcrypt.hash(password, salt)
     },
-    async checkCredentials(loginOrEmail:string,password:string){
+    async checkCredentials(loginOrEmail:string, password:string){
         const user = await repositoryUsers.findByLoginOrEmail(loginOrEmail)
         if(!user) return false
         const passwordHash = await this._generateHash(password, user.passwordSalt)

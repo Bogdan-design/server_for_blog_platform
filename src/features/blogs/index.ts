@@ -40,7 +40,7 @@ const getBlogViewModel = (dbBlog: WithId<BlogType>): BlogType => {
 export const blogsController = {
     //RequestWithQuery<QueryBlogModel>
 
-    getBlogs: async (req: any, res: Response<ObjectModelFromDB<BlogType> | { error: string }>): Promise<void> => {
+    async getBlogs  (req: any, res: Response<ObjectModelFromDB<BlogType> | { error: string }>): Promise<void>  {
         try {
 
             const {
@@ -83,7 +83,7 @@ export const blogsController = {
 
     },
 
-    createBlog: async (req: RequestWithBody<CreateBlogModel>, res: Response<BlogType | { error: string }>) => {
+    async createBlog (req: RequestWithBody<CreateBlogModel>, res: Response<BlogType | { error: string }>): Promise<void>  {
 
 
         try {
@@ -122,7 +122,7 @@ export const blogsController = {
             return
         }
     },
-    findAllPostsForBlog: async (req: any, res: Response<ObjectModelFromDB<PostType> | {error: string}>) => {
+    async findAllPostsForBlog (req: any, res: Response<ObjectModelFromDB<PostType> | {error: string}>) {
         //RequestWithParamsAndQuery<{blogId:string},QueryPostModel>
         try {
         const blogId = req.params.blogId
@@ -180,7 +180,7 @@ export const blogsController = {
         }
     },
 
-    findBlog: async (req: RequestWithParams<BlogParamsType>, res: Response<BlogType | { error: string }>) => {
+    async findBlog (req: RequestWithParams<BlogParamsType>, res: Response<BlogType | { error: string }>):Promise<void> {
         try {
             const blogId = req.params.id;
             if (!blogId) {
@@ -211,9 +211,9 @@ export const blogsController = {
 
     },
 
-    updateBlog: async (req: RequestWithParamsAndBody<BlogParamsType, UpdateBlogModel>, res: Response<BlogType | {
+    async updateBlog  (req: RequestWithParamsAndBody<BlogParamsType, UpdateBlogModel>, res: Response<BlogType | {
         error: string
-    }>) => {
+    }>): Promise<void>  {
 
         try {
             const blogId = req.params.id;
@@ -249,11 +249,14 @@ export const blogsController = {
 
     },
 
-    deleteBlog: async (req: RequestWithParams<BlogParamsType>, res: any) => {
+    async deleteBlog  (req: RequestWithParams<BlogParamsType>, res: any):Promise<void> {
 
         try {
+
             const blogId = req.params.id;
+
             const resDelete = await serviceBlogs.deleteBlog(blogId);
+
             if (resDelete.deletedCount === 0) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)

@@ -4,13 +4,13 @@ import {BlogType} from "../../types/types";
 import {UpdateBlogModel} from "../../features/blogs/models/UpdateBlogModel";
 
 export const blogsRepository = {
-    getBlogs: async (
+    async getBlogs (
         pageNumber: number,
         pageSize: number,
         sortBy: string,
         sortDirection: SortDirection,
         searchNameTerm: string | null
-    ) => {
+    )  {
 
         const filter: any = {}
         if (searchNameTerm !== null) {
@@ -23,7 +23,7 @@ export const blogsRepository = {
             .limit(pageSize)
             .toArray()
     },
-    getBlogsCount: async (searchNameTerm: string) => {
+    async getBlogsCount  (searchNameTerm: string){
         const filter: any = {};
         if (searchNameTerm !== null) {
             filter.name = {$regex: searchNameTerm, $options: "i"};
@@ -32,19 +32,19 @@ export const blogsRepository = {
         return await blogCollection
             .countDocuments(filter)
     },
-    createBlog: async (newBlogModel:BlogType) => {
+    async createBlog  (newBlogModel:BlogType)  {
         return await blogCollection.insertOne(newBlogModel)
     },
-    findOneBlog: async (result:InsertOneResult<BlogType>) => {
+    async findOneBlog (result:InsertOneResult<BlogType>)  {
         return await blogCollection.findOne({_id: result.insertedId})
     },
-    findBlogById: async (blogId:string) => {
+    async findBlogById  (blogId:string) {
         return await blogCollection.findOne({_id: new ObjectId(blogId)})
     },
-    updateBlog: async (blogId:string,newBody:UpdateBlogModel) => {
+    async updateBlog (blogId:string,newBody:UpdateBlogModel)  {
         return await blogCollection.updateOne({_id: new ObjectId(blogId)}, {$set: {...newBody}});
     },
-    deleteBlog: async (blogId:string) => {
+    async deleteBlog (blogId:string) {
         return await blogCollection.deleteOne({_id: new ObjectId(blogId)});
     }
 

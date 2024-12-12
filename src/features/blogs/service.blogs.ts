@@ -4,13 +4,13 @@ import {BlogType} from "../../types/types";
 import {UpdateBlogModel} from "../../features/blogs/models/UpdateBlogModel";
 
 export const serviceBlogs = {
-    getBlogs: async (
+    async getBlogs (
         pageNumber: number,
         pageSize: number,
         sortBy: string,
         sortDirection: SortDirection,
         searchNameTerm: string
-    ) => {
+    ) {
 
         const blogs = await blogsRepository.getBlogs(
             pageNumber,
@@ -34,7 +34,7 @@ export const serviceBlogs = {
             items: blogs
         }
     },
-    createBlog: async (newBlogModel: BlogType) => {
+    async createBlog (newBlogModel: BlogType) {
 
         const result = await blogsRepository.createBlog(newBlogModel)
 
@@ -42,13 +42,13 @@ export const serviceBlogs = {
 
         return {result, newBlog}
     },
-    findBlog: async (blogId: string) => {
+    async findBlog  (blogId: string) {
         return await blogsRepository.findBlogById(blogId)
     },
-    updateBlog: async (blogId: string, newBody: UpdateBlogModel) => {
+    async updateBlog (blogId: string, newBody: UpdateBlogModel)  {
         return await blogsRepository.updateBlog(blogId,newBody)
     },
-    deleteBlog: async (blogId: string) => {
+    async deleteBlog (blogId: string)  {
         return await blogsRepository.deleteBlog(blogId)
     }
 }

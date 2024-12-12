@@ -68,6 +68,12 @@ export const userInputValidationBodyMiddleware = [
     errorsMiddleware
 ]
 
+export const loginInputValidationBodyMiddleware = [
+    body("loginOrEmail").trim().notEmpty(),
+    body('password').trim().notEmpty(),
+    errorsMiddleware
+]
+
 
 
 

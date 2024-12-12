@@ -1,16 +1,18 @@
 import {usersCollection} from "../../db/mongo.db";
 import {QueryModel} from "../../helpers/paginationQuereis";
-import {ObjectId, OptionalId} from "mongodb";
-import {UserType} from "../../types/types";
-import {CreateUserModel} from "../../features/users/models/CreateUserModel";
-import bcrypt from "bcrypt";
+import {ObjectId} from "mongodb";
 
 export const repositoryUsers = {
     getUsers: async ({pageSize, sortBy, pageNumber, sortDirection, searchLoginTerm, searchEmailTerm}: QueryModel) => {
 
-        const filter: any = {}
-        if (searchLoginTerm) filter.login = {$regex: searchLoginTerm, $options: "i"};
-        if (searchEmailTerm) filter.email = {$regex: searchEmailTerm, $options: "i"};
+        // const filter: any = {}
+        // if (searchLoginTerm) filter.login = {$regex: searchLoginTerm, $options: "i"};
+        // if (searchEmailTerm) filter.email = {$regex: searchEmailTerm, $options: "i"};
+
+        let filter:any = {}
+        if(searchLoginTerm || searchEmailTerm){
+            filter = {$or: [{email: {$regex:searchEmailTerm,$options:"i"}}, {login: {$regex:searchLoginTerm,$options:"i"}}]}
+        }
         return await usersCollection
             .find(filter)
             .sort({[sortBy]: sortDirection === 'asc' ? 'asc' : -1})
@@ -18,22 +20,26 @@ export const repositoryUsers = {
             .limit(pageSize)
             .toArray();
     },
+
     getUsersCount: async ({searchLoginTerm, searchEmailTerm}: Partial<{
         searchLoginTerm: string,
         searchEmailTerm: string
     }>) => {
 
-        const filter: any = {}
-        if (searchLoginTerm) filter.login = {$regex: searchLoginTerm, $options: "i"};
-        if (searchEmailTerm) filter.email = {$regex: searchEmailTerm, $options: "i"}
-        return await usersCollection.countDocuments(filter)
+        let filter:any = {}
+        if(searchLoginTerm || searchEmailTerm){
+            filter = {$or: [{email: {$regex:searchEmailTerm,$options:"i"}}, {login: {$regex:searchLoginTerm,$options:"i"}}]}
+        }
+
+        const totalCount = await usersCollection.countDocuments(filter)
+        return totalCount
     },
     createUser: async (newUser: {
-        login:string
-        email:string
-        passwordSalt:string
-        passwordHash:string
-        createdAt:string
+        login: string
+        email: string
+        passwordSalt: string
+        passwordHash: string
+        createdAt: string
     }) => {
 
 
@@ -42,10 +48,20 @@ export const repositoryUsers = {
     getUserById: async (id: string) => {
         return await usersCollection.findOne({_id: new ObjectId(id)})
     },
-    findByLoginOrEmail: async (loginOrEmail:string) => {
+    findByLoginOrEmail: async (loginOrEmail: string) => {
 
-        const user = await usersCollection.findOne({$or:[{email:loginOrEmail},{login:loginOrEmail}]})
-        return user
+        let filter:any = {}
+        if(loginOrEmail){
+            filter = {
+                $or: [
+                    { email: { $regex: `^${loginOrEmail}$`, $options: 'i' } },
+                    { login: { $regex: `^${loginOrEmail}$`, $options: 'i' } }
+                ]
+            }
+        }
+
+        const result = await usersCollection.findOne(filter)
+        return result
     },
     deleteUserById: async (id: string) => {
         return await usersCollection.deleteOne({_id: new ObjectId(id)})

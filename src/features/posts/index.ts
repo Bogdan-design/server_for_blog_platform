@@ -37,7 +37,7 @@ export const getPostViewModel = (dbPost: WithId<PostType>): PostType => {
 
 export const postsController = {
 
-    getPosts: async (req: any, res: Response<ObjectModelFromDB<PostType> | { error: string }>) => {
+    async getPosts (req: any, res: Response<ObjectModelFromDB<PostType> | { error: string }>)  {
 
         try {
             const {
@@ -74,10 +74,11 @@ export const postsController = {
 
     },
 
-    createPost: async (
+    async createPost (
         req: RequestWithParamsAndBody<{blogId:string},CreatePostByBlogIdParamsModel>,
 
-        res: Response<PostType | { error: string }>) => {
+        res: Response<PostType | { error: string }>
+    ) {
         try {
             const blogId = req.params.blogId || req.body.blogId;
 
@@ -130,7 +131,7 @@ export const postsController = {
     },
 
 
-    findPost: async (req: RequestWithParams<PostParamsType>, res: Response<PostType | { error: string }>) => {
+    async findPost (req: RequestWithParams<PostParamsType>, res: Response<PostType | { error: string }>)  {
         try {
 
             const postId = req.params.id;
@@ -166,8 +167,7 @@ export const postsController = {
 
     },
 
-    updatePost:
-        async (req: RequestWithParamsAndBody<PostParamsType, UpdatePostModel>, res: any) => {
+    async updatePost (req: RequestWithParamsAndBody<PostParamsType, UpdatePostModel>, res: any) {
             try {
                 const postId = req.params.id;
 
@@ -189,11 +189,12 @@ export const postsController = {
 
         },
 
-    deletePost:
-        async (req: RequestWithParams<PostParamsType>, res: any) => {
+    async deletePost (req: RequestWithParams<PostParamsType>, res: any)  {
             try {
-                const postId = req.params.id;
-                const resDelete = await servicePosts.deletePost(postId);
+                const postId = req.params.id
+
+                const resDelete = await servicePosts.deletePost(postId)
+
                 if (resDelete.deletedCount === 0) {
                     res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Dont founded post"})
                     return

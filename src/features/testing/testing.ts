@@ -5,7 +5,7 @@ import {blogCollection, postCollection, usersCollection} from "../../db/mongo.db
 export const testRouter = express.Router()
 
 export const testingController = {
-    deleteAllData: async (req: any, res:any)=>{
+    async deleteAllData  (req: any, res:any){
         try{
             await blogCollection.drop()
             await postCollection.drop()

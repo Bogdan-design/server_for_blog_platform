@@ -4,13 +4,13 @@ import {PostType} from "../../types/types";
 import {UpdatePostModel} from "../../features/posts/models/UpdatePostModel";
 
 export const servicePosts = {
-    getPosts: async (
+    async getPosts (
         pageNumber: number,
         pageSize: number,
         sortBy: string,
         sortDirection: SortDirection,
         blogId?:string,
-    ) => {
+    ) {
         const posts = await repositoryPosts.getPosts(
             pageNumber,
             pageSize,
@@ -30,7 +30,7 @@ export const servicePosts = {
             items: posts
         }
     },
-    createPost: async (newPost: PostType) => {
+    async createPost (newPost: PostType)  {
         const result = await repositoryPosts.createPost(newPost)
         const createdNewPost = await repositoryPosts.findPostByPostId(result.insertedId.toString())
         return {
@@ -38,10 +38,10 @@ export const servicePosts = {
             createdNewPost
         }
     },
-    updatePost: async (postId:string,newBodyPost:UpdatePostModel)=>{
+    async updatePost (postId:string,newBodyPost:UpdatePostModel){
         return await repositoryPosts.updatePost(postId,newBodyPost)
     },
-    deletePost: async (postId:string) => {
+    async deletePost  (postId:string)  {
         return await repositoryPosts.deletePost(postId)
     }
 }

@@ -15,7 +15,6 @@ import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import {authMiddleware} from "../../middlewares/authMiddleware";
 import {UserId} from "../../features/users/models/URIParamsUserIdModel";
 import {idValidation, userInputValidationBodyMiddleware} from "../../middlewares/errorsMiddleware";
-import {repositoryUsers} from "../../features/users/repository.users";
 
 export const usersRouter = Router();
 
@@ -56,9 +55,9 @@ export const usersController = {
             return
 
         } catch (e) {
-            res.status(HTTP_STATUSES.NOT_FOUND_404).json({
-                'error': 'Not Found'
-            })
+            res
+                .status(HTTP_STATUSES.NOT_FOUND_404)
+                .json({'error': 'Not Found'})
             return
         }
     },
@@ -66,13 +65,13 @@ export const usersController = {
         try{
 
 
-            const {isLogin,newUserFromDB,isEmail,result} = await serviceUsers.createUser({
+            const {login,newUserFromDB,email,result} = await serviceUsers.createUser({
                 login:req.body.login,
                 password:req.body.password,
                 email:req.body.email
             });
 
-            if(!isLogin) {
+            if(login) {
                 res
                     .status(HTTP_STATUSES.UNAUTHORIZED_401)
                     .json({
@@ -86,7 +85,7 @@ export const usersController = {
                 return
             }
 
-            if(!isEmail) {
+            if(email) {
                 res
                     .status(HTTP_STATUSES.UNAUTHORIZED_401)
                     .json({

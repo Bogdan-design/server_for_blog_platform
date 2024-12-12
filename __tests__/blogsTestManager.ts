@@ -8,7 +8,7 @@ import {BlogType, ExpectedErrorObjectType} from "../src/types/types";
 export const blogsTestManager = {
     async createBlog(data: CreateBlogModel,
                      codedAuth:string,
-                     expectedStatusCode: HttpStatusType = HTTP_STATUSES.CREATED_201,
+                     expectedStatusCode = HTTP_STATUSES.CREATED_201,
                      expectedObject?: ExpectedErrorObjectType | BlogType) {
 
 

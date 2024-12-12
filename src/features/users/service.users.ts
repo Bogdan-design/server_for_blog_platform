@@ -12,18 +12,18 @@ export const serviceUsers = {
         const {pageSize, pageNumber, searchLoginTerm, searchEmailTerm} = paginationQueriesForUsers
 
         const users: WithId<UserType>[] = await repositoryUsers.getUsers(paginationQueriesForUsers)
-        const usersCount = await repositoryUsers.getUsersCount({searchLoginTerm, searchEmailTerm})
+        const totalCount = await repositoryUsers.getUsersCount({searchLoginTerm, searchEmailTerm})
         return {
-            pagesCount: Math.ceil(usersCount / pageSize),
+            pagesCount: Math.ceil(totalCount / pageSize),
             page: pageNumber,
             pageSize,
-            totalCount: usersCount,
+            totalCount,
             items: users
         }
     },
     async createUser({login, password, email}: CreateUserModel) {
 
-        const passwordSalt = await bcrypt.genSalt(10)
+        const passwordSalt = await bcrypt.genSalt()
         const passwordHash = await this._generateHash(password, passwordSalt)
 
         const newUser = {
@@ -34,19 +34,26 @@ export const serviceUsers = {
             createdAt: new Date().toISOString()
         }
 
-        const isLogin = await this.checkCredentials(login, passwordHash)
+        const foundObjectByLogin = await repositoryUsers.findByLoginOrEmail(login)
 
-        const isEmail = await this.checkCredentials(email, passwordHash)
+        const foundObjectByEmail = await repositoryUsers.findByLoginOrEmail(email)
 
-        const result = await repositoryUsers.createUser(newUser)
+        let result
+        let newUserFromDB
 
-        const newUserFromDB = await repositoryUsers.getUserById(result.insertedId.toString())
+        if (!foundObjectByLogin && !foundObjectByEmail) {
+
+            result = await repositoryUsers.createUser(newUser)
+
+            newUserFromDB = await repositoryUsers.getUserById(result.insertedId.toString())
+        }
+
 
         return {
             result,
             newUserFromDB,
-            isLogin,
-            isEmail
+            login: foundObjectByLogin,
+            email: foundObjectByEmail
         }
     },
     async deleteUserById(id: string) {
@@ -56,11 +63,13 @@ export const serviceUsers = {
     async _generateHash(password: string, salt: string) {
         return await bcrypt.hash(password, salt)
     },
-    async checkCredentials(loginOrEmail:string, password:string){
+    async checkCredentials(loginOrEmail: string, password: string) {
         const user = await repositoryUsers.findByLoginOrEmail(loginOrEmail)
-        if(!user) return false
+        if (!user) return false
+
         const passwordHash = await this._generateHash(password, user.passwordSalt)
-        return user.passwordHash !== passwordHash;
+
+        return user.passwordHash === passwordHash
     }
 
 }

@@ -4,13 +4,13 @@ import {PostType} from "../../types/types";
 import {UpdatePostModel} from "../../features/posts/models/UpdatePostModel";
 
 export const repositoryPosts = {
-    getPosts: async (
+    async getPosts(
         pageNumber: number,
         pageSize: number,
         sortBy: string,
         sortDirection: SortDirection,
-        blogId?:string,
-    ) => {
+        blogId?: string,
+    ) {
         const filter: any = blogId ? {blogId: {$regex: blogId}} : {}
 
         return await postCollection
@@ -20,23 +20,23 @@ export const repositoryPosts = {
             .limit(pageSize)
             .toArray()
     },
-    getPostCount: async (blogId?:string) => {
+    async getPostCount(blogId?: string) {
         const filter: any = blogId ? {blogId: {$regex: blogId}} : {}
         return await postCollection.countDocuments(filter)
     },
-    createPost: async (newPost: PostType) => {
+    async createPost(newPost: PostType) {
         return await postCollection.insertOne(newPost)
     },
-    findPostByPostId: async (postId: string) => {
+    async findPostByPostId(postId: string) {
         return await postCollection.findOne({_id: new ObjectId(postId)})
     },
-    updatePost: async (postId: string, newBodyPost: UpdatePostModel) => {
+    async updatePost(postId: string, newBodyPost: UpdatePostModel) {
         return await postCollection.updateOne(
             {_id: new ObjectId(postId)},
             {$set: {...newBodyPost}},
         )
     },
-    deletePost: async (postId: string) => {
+    async deletePost(postId: string) {
         return await postCollection.deleteOne({_id: new ObjectId(postId)})
     }
 }

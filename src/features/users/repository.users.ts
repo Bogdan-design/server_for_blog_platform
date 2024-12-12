@@ -5,9 +5,7 @@ import {ObjectId} from "mongodb";
 export const repositoryUsers = {
     getUsers: async ({pageSize, sortBy, pageNumber, sortDirection, searchLoginTerm, searchEmailTerm}: QueryModel) => {
 
-        // const filter: any = {}
-        // if (searchLoginTerm) filter.login = {$regex: searchLoginTerm, $options: "i"};
-        // if (searchEmailTerm) filter.email = {$regex: searchEmailTerm, $options: "i"};
+
 
         let filter:any = {}
         if(searchLoginTerm || searchEmailTerm){

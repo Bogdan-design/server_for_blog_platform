@@ -9,7 +9,7 @@ export const SETTINGS = {
         POSTS:'/posts',
         USERS:'/users',
         TESTING:'/testing',
-        LOGIN:'/auth'
+        LOGIN:'/auth/login',
     },
     AUTH_TOKEN:process.env.AUTH_TOKEN || 'admin:qwerty',
     MONGO_URI:process.env.MONGO_URL || 'mongodb://0.0.0.0:27017',

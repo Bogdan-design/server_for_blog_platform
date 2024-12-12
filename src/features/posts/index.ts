@@ -64,6 +64,8 @@ export const postsController = {
                     totalCount: postsFromDB.totalCount,
                     items: postsFromDB.items.map(getPostViewModel)
                 })
+
+
             return
 
         } catch (e) {

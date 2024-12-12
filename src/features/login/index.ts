@@ -14,7 +14,6 @@ export const loginController = {
 
             const isAuthenticated = await serviceUsers.checkCredentials(loginOrEmail, password);
 
-
             if (!isAuthenticated) {
                 res.status(HTTP_STATUSES.UNAUTHORIZED_401).json({
                     "errorsMessages": [
@@ -27,9 +26,8 @@ export const loginController = {
                 return
             }
 
-            res.status(HTTP_STATUSES.NO_CONTENT_204)
-
-            next()
+            res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+            return
 
         } catch (e: any) {
             res.status(HTTP_STATUSES.UNAUTHORIZED_401).json({
@@ -43,8 +41,7 @@ export const loginController = {
             return
         }
 
-
     }
 }
 
-loginRouter.post('/login', loginInputValidationBodyMiddleware, loginController.authenticate)
+loginRouter.post('/', loginInputValidationBodyMiddleware, loginController.authenticate)

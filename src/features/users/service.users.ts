@@ -49,11 +49,13 @@ export const serviceUsers = {
         }
 
 
+
         return {
             result,
             newUserFromDB,
             login: foundObjectByLogin,
-            email: foundObjectByEmail
+            email: foundObjectByEmail,
+
         }
     },
     async deleteUserById(id: string) {

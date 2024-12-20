@@ -9,7 +9,8 @@ export const SETTINGS = {
         POSTS:'/posts',
         USERS:'/users',
         TESTING:'/testing',
-        LOGIN:'/auth/login',
+        LOGIN:'/auth',
+        COMMENTS:'/comments',
     },
     AUTH_TOKEN:process.env.AUTH_TOKEN || 'admin:qwerty',
     MONGO_URI:process.env.MONGO_URL || 'mongodb://0.0.0.0:27017',
@@ -17,5 +18,6 @@ export const SETTINGS = {
     BLOG_COLLECTION_NAME:'blogs',
     POST_COLLECTION_NAME:'posts',
     USERS_COLLECTION_NAME:'users',
+    COMMENTS_COLLECTION_NAME:'comments',
 
 }

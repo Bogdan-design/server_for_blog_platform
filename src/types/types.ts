@@ -37,6 +37,17 @@ export type UserType = {
     createdAt: string,
 }
 
+export type CommentType = {
+    id?: string
+    postId: string
+    content: string
+    commentatorInfo: {
+        userId:string
+        userLogin:string
+    }
+    createdAt: string
+}
+
 type ErrorMessage = {
     message: string;
     field: string;

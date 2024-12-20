@@ -3,6 +3,7 @@ import {NextFunction, Request, Response} from "express";
 import {HTTP_STATUSES} from "../status.code";
 import {blogCollection} from "../db/mongo.db";
 import {ObjectId} from "mongodb";
+import {repositoryPosts} from "../features/posts/repository.posts";
 
 export const idValidation = param("id").notEmpty().isString()
 export const blogIdParamsValidation = param("blogId").notEmpty().isString().custom(
@@ -68,10 +69,36 @@ export const userInputValidationBodyMiddleware = [
     errorsMiddleware
 ]
 
-export const loginInputValidationBodyMiddleware = [
+export const authInputValidationBodyMiddleware = [
     body("loginOrEmail").trim().notEmpty(),
     body('password').trim().notEmpty(),
     errorsMiddleware
+]
+
+export const commentsInputValidationBodyMiddleware = [
+    param('commentId').trim().notEmpty().custom(
+        async (commentId:string) => {
+            const res = await blogCollection.findOne({_id: new ObjectId(commentId)})
+            if (!res) {
+                throw new Error("blogId not found")
+            }
+            return true
+        }
+    ).withMessage("Wrong blogId"),
+    body('content').trim().notEmpty().isString().isLength({min:20,max: 300}),
+]
+
+export const commentsInputValidationParamsMiddleware = [
+    param('postId').trim().notEmpty().custom(
+        async (postId:string) => {
+            const res = await repositoryPosts.findPostByPostId(postId)
+            if (!res) {
+                throw new Error("blogId not found")
+            }
+            return true
+        }
+    ),
+    body('content').trim().notEmpty().isString().isLength({min:20,max:300}),
 ]
 
 

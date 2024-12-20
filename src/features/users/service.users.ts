@@ -49,7 +49,6 @@ export const serviceUsers = {
         }
 
 
-
         return {
             result,
             newUserFromDB,
@@ -70,8 +69,11 @@ export const serviceUsers = {
         if (!user) return false
 
         const passwordHash = await this._generateHash(password, user.passwordSalt)
-
-        return user.passwordHash === passwordHash
+        if (user.passwordHash === passwordHash) {
+            return user
+        }else{
+            return false
+        }
     }
 
 }

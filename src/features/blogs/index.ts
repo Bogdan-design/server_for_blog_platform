@@ -202,6 +202,7 @@ export const blogsController = {
                 .status(HTTP_STATUSES.OK_200)
                 .json(getBlogViewModel(findBlogById));
             return
+
         } catch (e) {
             res
                 .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)

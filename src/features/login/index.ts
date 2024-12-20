@@ -3,18 +3,19 @@ import {RequestWithBody} from "../../types/types";
 import {AuthLoginModel} from "../../features/login/AuthLoginModel";
 import {serviceUsers} from "../../features/users/service.users";
 import {HTTP_STATUSES} from "../../status.code";
-import {loginInputValidationBodyMiddleware} from "../../middlewares/errorsMiddleware";
+import {authInputValidationBodyMiddleware} from "../../middlewares/errorsMiddleware";
+import {jwtService} from "../../application/jwt.service";
 
-export const loginRouter = Router()
+export const authRouter = Router()
 
-export const loginController = {
+export const authController = {
     async authenticate(req: RequestWithBody<AuthLoginModel>, res: Response, next: NextFunction) {
         try {
             const {loginOrEmail, password} = req.body;
 
-            const isAuthenticated = await serviceUsers.checkCredentials(loginOrEmail, password);
+            const user = await serviceUsers.checkCredentials(loginOrEmail, password);
 
-            if (!isAuthenticated) {
+            if (!user) {
                 res.status(HTTP_STATUSES.UNAUTHORIZED_401).json({
                     "errorsMessages": [
                         {
@@ -26,7 +27,14 @@ export const loginController = {
                 return
             }
 
-            res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+            const token = await jwtService.createJWT(user)
+            if (!token) {
+                res.status(HTTP_STATUSES.UNAUTHORIZED_401).json({message:'Some going wrong token'})
+                return
+            }
+            res.status(HTTP_STATUSES.OK_200).json({
+                accessToken: token
+            })
             return
 
         } catch (e: any) {
@@ -44,4 +52,5 @@ export const loginController = {
     }
 }
 
-loginRouter.post('/', loginInputValidationBodyMiddleware, loginController.authenticate)
+authRouter.post('/login', authInputValidationBodyMiddleware, authController.authenticate)
+authRouter.get('/me',authController.authenticate)

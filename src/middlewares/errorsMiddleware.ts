@@ -16,6 +16,26 @@ export const blogIdParamsValidation = param("blogId").notEmpty().isString().cust
         return true
     }).withMessage("Wrong blogId")
 
+export const postIdParamValidation = param('postId').trim().notEmpty().custom(
+    async (postId: string) => {
+        const res = await repositoryPosts.findPostByPostId(postId)
+        if (!res) {
+            throw new Error("blogId not found")
+        }
+        return true
+    }
+)
+
+export const commentIdParamValidation = param('commentId').trim().notEmpty().custom(
+    async (commentId: string) => {
+        const res = await blogCollection.findOne({_id: new ObjectId(commentId)})
+        if (!res) {
+            throw new Error("commentId not found")
+        }
+        return true
+    }
+)
+
 export const blogIdValidation = body("blogId").notEmpty().isString().custom(
     async (blogId: string) => {
 
@@ -24,7 +44,7 @@ export const blogIdValidation = body("blogId").notEmpty().isString().custom(
             throw new Error("blogId not found")
         }
         return true
-    }).withMessage("Wrong blogId")
+    })
 
 export const errorsMiddleware = (req: Request, res: Response, next: NextFunction) => {
 
@@ -62,8 +82,8 @@ export const postInputValidationBodyMiddleware = [
     errorsMiddleware
 ]
 export const userInputValidationBodyMiddleware = [
-    body("login").trim().notEmpty().isLength({min:3,max: 10}).matches(/^[a-zA-Z0-9_-]*$/),
-    body('password').trim().notEmpty().isString().isLength({min:6,max: 20}),
+    body("login").trim().notEmpty().isLength({min: 3, max: 10}).matches(/^[a-zA-Z0-9_-]*$/),
+    body('password').trim().notEmpty().isString().isLength({min: 6, max: 20}),
     body('email').trim().notEmpty().isString().isEmail(),
 
     errorsMiddleware
@@ -75,32 +95,25 @@ export const authInputValidationBodyMiddleware = [
     errorsMiddleware
 ]
 
-export const commentsInputValidationBodyMiddleware = [
-    param('commentId').trim().notEmpty().custom(
-        async (commentId:string) => {
-            const res = await blogCollection.findOne({_id: new ObjectId(commentId)})
-            if (!res) {
-                throw new Error("blogId not found")
-            }
-            return true
-        }
-    ).withMessage("Wrong blogId"),
-    body('content').trim().notEmpty().isString().isLength({min:20,max: 300}),
+export const postInputValidationCommentBodyValidationMiddleware = [
+    body('content').trim().notEmpty().isString().isLength({min: 20, max: 300}),
+    errorsMiddleware
 ]
 
 export const commentsInputValidationParamsMiddleware = [
-    param('postId').trim().notEmpty().custom(
-        async (postId:string) => {
-            const res = await repositoryPosts.findPostByPostId(postId)
+    body('content').trim().notEmpty().isString().isLength({min: 20, max: 300}),
+    errorsMiddleware
+]
+
+export const confirmationInputValidationBodyMiddleware = [
+    body('code').trim().trim().notEmpty().isString().custom(
+        async (code: string) => {
+            const res = await blogCollection.findOne({_id: new ObjectId(code)})
             if (!res) {
-                throw new Error("blogId not found")
+                throw new Error("code is not correct")
             }
             return true
         }
-    ),
-    body('content').trim().notEmpty().isString().isLength({min:20,max:300}),
+    )
 ]
-
-
-
 

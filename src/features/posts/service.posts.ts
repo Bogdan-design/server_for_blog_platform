@@ -48,7 +48,6 @@ export const servicePosts = {
     },
     async createComment({postId, content, userId}: {postId: string, content: string, userId: string}) {
 
-        const findPost = await repositoryPosts.findPostByPostId(postId)
 
         const userLogin = await repositoryUsers.getUserById(userId.toString())
 

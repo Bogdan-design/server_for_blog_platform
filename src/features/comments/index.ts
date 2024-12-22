@@ -1,25 +1,27 @@
-import {Request, Response, Router} from "express";
+import {Response, Router} from "express";
 import {HTTP_STATUSES} from "../../status.code";
 import {serviceComments} from "../../features/comments/service.comments";
 import {repositoryComments} from "../../features/comments/repository.comments";
-import {CommentType, RequestWithParams, RequestWithParamsAndBody} from "../../types/types";
-import {commentsInputValidationBodyMiddleware} from "../../middlewares/errorsMiddleware";
-import {ObjectId} from "mongodb";
+import {CommentType, RequestWithParams, RequestWithParamsAndBody, UserType} from "../../types/types";
+import {commentsInputValidationParamsMiddleware} from "../../middlewares/errorsMiddleware";
+import {ObjectId, WithId} from "mongodb";
+import {authBearerMiddleware} from "../../middlewares/authBearerMiddleware";
 
 export const commentsRouter = Router()
 
 export const commentsController = {
     async updateComment(req: RequestWithParamsAndBody<{ commentId: string }, {
         content: string
-    }>, res: Response<any>): Promise<void> {
+    }> & {
+        user: WithId<UserType>
+    }, res: Response<any>): Promise<void> {
         try {
             const id = req.params.commentId
 
-            const newContent = req.body.content;
+            const userId = req.user._id.toString()
+            const foundComment = await repositoryComments.getCommentsById(id)
 
-            const isComment = await repositoryComments.getCommentsById(id)
-
-            if (!isComment) {
+            if (!foundComment) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
                     .json({
@@ -30,7 +32,18 @@ export const commentsController = {
                     })
                 return
             }
+            if(userId !== foundComment.commentatorInfo.userId){
+                res.sendStatus(HTTP_STATUSES.NOT_OWN_403)
+                return
+            }
+
+            const newContent = req.body.content;
             const newComment = await serviceComments.updateComment({id, newContent})
+
+            if(!newComment.acknowledged){
+                res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                return
+            }
 
             res
                 .sendStatus(HTTP_STATUSES.NO_CONTENT_204)
@@ -44,9 +57,32 @@ export const commentsController = {
             return
         }
     },
-    async deleteComment(req: Request, res: Response) {
+    async deleteComment(req: RequestWithParams<{ commentId: string }> & {
+        user: WithId<UserType>
+    }, res: Response) {
         try {
             const id = req.params.commentId
+
+            const userId = req.user._id.toString()
+
+            const foundComment = await repositoryComments.getCommentsById(id)
+
+            if (!foundComment) {
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({
+                        errorsMessages: {
+                            message: "Comment with that id not found.",
+                            field: "id"
+                        }
+                    })
+                return
+            }
+            if(userId !== foundComment.commentatorInfo.userId){
+                res.sendStatus(HTTP_STATUSES.NOT_OWN_403)
+                return
+            }
+
             const result = await serviceComments.deleteComment(id)
 
             if (result.deletedCount === 0) {
@@ -63,7 +99,9 @@ export const commentsController = {
             res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Error deleting comment"});
         }
     },
-    async getCommentById(req: RequestWithParams<{ id: string }>, res: Response<CommentType | { message: string }>) {
+    async getCommentById(req: RequestWithParams<{ id: string }>, res: Response<Omit<CommentType, 'postId'> | {
+        message: string
+    }>) {
         try {
             const id = req.params.id;
 
@@ -74,7 +112,6 @@ export const commentsController = {
             }
 
             const comment = await repositoryComments.getCommentsById(id)
-debugger
             if (!comment) {
                 res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
@@ -101,6 +138,6 @@ debugger
 
 }
 
-commentsRouter.put('/:commentId', commentsInputValidationBodyMiddleware, commentsController.updateComment)
-commentsRouter.delete('/:commentId', commentsController.deleteComment)
+commentsRouter.put('/:commentId', authBearerMiddleware,...commentsInputValidationParamsMiddleware, commentsController.updateComment)
+commentsRouter.delete('/:commentId', authBearerMiddleware, commentsController.deleteComment)
 commentsRouter.get('/:id', commentsController.getCommentById)

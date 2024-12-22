@@ -7,7 +7,7 @@ import {
     RequestWithBody,
     RequestWithParams,
     RequestWithQuery,
-    UserType
+    UserType, UserTypeDB
 } from "../../types/types";
 import {serviceUsers} from "../../features/users/service.users";
 import {WithId} from "mongodb";
@@ -18,12 +18,12 @@ import {idValidation, userInputValidationBodyMiddleware} from "../../middlewares
 
 export const usersRouter = Router();
 
-const getUsersViewModel = (dbUser: WithId<UserType>): UserType => {
+const getUsersViewModel = (dbUser: WithId<UserTypeDB>): UserType => {
     return {
         id: dbUser._id.toString(),
-        login: dbUser.login,
-        email: dbUser.email,
-        createdAt: dbUser.createdAt,
+        login: dbUser.accountData.login,
+        email: dbUser.accountData.email,
+        createdAt: dbUser.accountData.createdAt,
     }
 }
 
@@ -61,7 +61,8 @@ export const usersController = {
             return
         }
     },
-    createUser: async (req:RequestWithBody<CreateUserModel>, res: Response<UserType | {error: string} | ExpectedErrorObjectType>) => {
+    createUser: async (req:RequestWithBody<CreateUserModel>,
+                       res: Response<UserType | {error: string} | ExpectedErrorObjectType>) => {
         try{
 
 

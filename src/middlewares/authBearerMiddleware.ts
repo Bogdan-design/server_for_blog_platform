@@ -6,7 +6,7 @@ import {repositoryUsers} from "../features/users/repository.users";
 export const authBearerMiddleware = async (req:any, res:Response<any>,next:NextFunction) => {
 
     if(!req.headers.authorization){
-        res.status(HTTP_STATUSES.UNAUTHORIZED_401)
+        res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401)
         return
     }
 

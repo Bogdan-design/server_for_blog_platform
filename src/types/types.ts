@@ -37,6 +37,20 @@ export type UserType = {
     createdAt: string,
 }
 
+export type UserTypeDB= {
+    accountData: UserType
+    emailConfirmation: {
+        confirmationCode: string
+        expirationDate: Date
+        isConfirmed: boolean
+    }
+}
+export type RegistrationType = {
+    login: string
+    email: string
+    password: string
+}
+
 export type CommentType = {
     id?: string
     postId: string

@@ -3,21 +3,30 @@ import {ObjectId, WithId} from "mongodb";
 import {
     blogIdValidation, commentsInputValidationParamsMiddleware,
     errorsMiddleware,
-    idValidation,
-    postInputValidationBodyMiddleware
+    idValidation, postIdParamValidation,
+    postInputValidationBodyMiddleware, postInputValidationCommentBodyValidationMiddleware
 } from '../../middlewares/errorsMiddleware';
 import {HTTP_STATUSES} from "../../status.code";
-import {ObjectModelFromDB, PostType, RequestWithParams, RequestWithParamsAndBody, UserType} from "../../types/types";
+import {
+    ObjectModelFromDB,
+    PostType,
+    RequestWithParams,
+    RequestWithParamsAndBody,
+    RequestWithParamsAndQuery,
+    UserType
+} from "../../types/types";
 import {authMiddleware} from "../../middlewares/authMiddleware";
 import {PostParamsType} from "../../features/posts/models/URIParamsPostIdModels";
 import {UpdatePostModel} from "../../features/posts/models/UpdatePostModel";
-import {paginationQueries} from "../../helpers/paginationQuereis";
+import {paginationQueries, QueryModel} from "../../helpers/paginationQuereis";
 import {servicePosts} from "./service.posts";
 import {serviceBlogs} from "../../features/blogs/service.blogs";
 import {repositoryPosts} from "../../features/posts/repository.posts";
 import {newPostObject} from "../../helpers/newPostObject";
 import {CreatePostByBlogIdParamsModel} from "../../features/blogs/models/CreatePostByBlogIdParamsModel";
 import {authBearerMiddleware} from "../../middlewares/authBearerMiddleware";
+import {serviceComments} from "../../features/comments/service.comments";
+import {paginationQueryForQueries} from "../../helpers/paginationQuereisFroComments";
 
 
 export const postsRouter = Router()
@@ -212,12 +221,18 @@ export const postsController = {
     },
 
     async createComment(req: RequestWithParamsAndBody<{ postId: string }, { content: string }> & {
-        user: any
+        user: WithId<UserType>
     }, res: Response<any>) {
         try {
             const userId = req.user._id.toString();
 
             const id = req.params.postId;
+
+            const findPostById = await repositoryPosts.findPostByPostId(id)
+            if(!findPostById) {
+                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
+                return
+            }
 
             if (!ObjectId.isValid(id)) {
                 res
@@ -243,11 +258,51 @@ export const postsController = {
             res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
             return
         }
+    },
+    async getCommentsByPostId(req: RequestWithParamsAndQuery<{ postId: string }, QueryModel>, res: Response<any>) {
+
+        try {
+            const postId = req.params.postId;
+            if(!postId){
+                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
+                return
+            }
+            const result = await repositoryPosts.findPostByPostId(postId);
+            if (!result) {
+                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
+                return
+            }
+
+            const {
+                pageNumber,
+                pageSize,
+                sortBy,
+                sortDirection
+            }=paginationQueryForQueries(req.query)
+
+            const getComments = await serviceComments.getCommentsByPostId({
+                pageNumber,
+                pageSize,
+                sortBy,
+                sortDirection,
+                postId
+            })
+
+            res.status(HTTP_STATUSES.OK_200).json(getComments);
+            return
+
+        } catch (e) {
+            console.error("Error deleting post:", e);
+            res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Internal Server Error"});
+            return
+        }
     }
 
 }
 
-postsRouter.post('/:postId/comments', authBearerMiddleware, commentsInputValidationParamsMiddleware, postsController.createComment);
+postsRouter.get('/:postId/comments',postsController.getCommentsByPostId);
+
+postsRouter.post('/:postId/comments', authBearerMiddleware,...postInputValidationCommentBodyValidationMiddleware, postsController.createComment);
 postsRouter.get('/', errorsMiddleware, postsController.getPosts);
 postsRouter.post('/', authMiddleware, blogIdValidation, postInputValidationBodyMiddleware, postsController.createPost);
 postsRouter.get('/:id', idValidation, errorsMiddleware, postsController.findPost);

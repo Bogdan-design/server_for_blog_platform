@@ -50,7 +50,7 @@ export const usersController = {
                     page: usersFromDB.page,
                     pageSize: usersFromDB.pageSize,
                     totalCount: usersFromDB.totalCount,
-                    items: usersFromDB.items.map(getUsersViewModel)
+                    items: usersFromDB.users.map(getUsersViewModel)
                 })
             return
 

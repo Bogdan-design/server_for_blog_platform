@@ -1,7 +1,7 @@
 import {repositoryUsers} from "../../features/users/repository.users";
-import {InsertOneResult, ObjectId, WithId} from "mongodb";
+import {InsertOneResult, WithId} from "mongodb";
 import {QueryModel} from "../../helpers/paginationQuereis";
-import {UserType, UserTypeDB} from "../../types/types";
+import {UserTypeDB} from "../../types/types";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import bcrypt from "bcrypt";
 import {v4 as uuidv4} from 'uuid';
@@ -21,7 +21,7 @@ export const serviceUsers = {
             page: pageNumber,
             pageSize,
             totalCount,
-            items: users
+            users
         }
     },
     async createUser({login, password, email}: CreateUserModel) {
@@ -50,11 +50,10 @@ export const serviceUsers = {
 
         const foundObjectByEmail = await repositoryUsers.findByLoginOrEmail(email)
 
-        let result: InsertOneResult<WithId<UserTypeDB>> | null = null
-        let newUserFromDB: WithId<UserTypeDB> | null = null
+        let result: InsertOneResult<WithId<UserTypeDB>> | null
+        let newUserFromDB: WithId<UserTypeDB> | null
 
         if (!foundObjectByLogin && !foundObjectByEmail) {
-
             result = await repositoryUsers.createUser(newUser)
 
             newUserFromDB = await repositoryUsers.getUserById(result.insertedId.toString())

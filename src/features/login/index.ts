@@ -80,7 +80,7 @@ export const authController = {
     },
     async registration(req: RequestWithBody<CreateUserModel>, res: Response<any>) {
         try {
-            const {email, login, newUserFromDB, result} = await serviceUsers.createUser({
+            const {email, login} = await serviceUsers.createUser({
                 login: req.body.login,
                 email: req.body.email,
                 password: req.body.password
@@ -92,8 +92,8 @@ export const authController = {
                     .json({
                         errorsMessages: [
                             {
-                                field: 'login or email',
-                                message: 'email or login already exists'
+                                message: 'Login already exists',
+                                field: 'login',
                             }
                         ]
                     })
@@ -106,8 +106,8 @@ export const authController = {
                     .json({
                         errorsMessages: [
                             {
-                                field: 'Login or email',
-                                message: 'email or login already exists'
+                                message: 'Email already exists',
+                                field: 'email',
                             }
                         ]
                     })
@@ -127,34 +127,15 @@ export const authController = {
     },
     async resending(req: RequestWithBody<CreateUserModel>, res: Response<any>) {
         try {
-            const {email, login, newUserFromDB, result} = await serviceUsers.createUser({
-                login: req.body.login,
-                email: req.body.email,
-                password: req.body.password
-            })
-
-            if (login) {
-                res
-                    .status(HTTP_STATUSES.BAD_REQUEST_400)
-                    .json({
-                        errorsMessages: [
-                            {
-                                field: 'login or email',
-                                message: 'email or login already exists'
-                            }
-                        ]
-                    })
-                return
-            }
-
+            const email = await authService.resendEmailConfirmationMessage(req.body.email)
             if (email) {
                 res
                     .status(HTTP_STATUSES.BAD_REQUEST_400)
                     .json({
                         errorsMessages: [
                             {
-                                field: 'Login or email',
-                                message: 'email or login already exists'
+                                message: 'Email already exists',
+                                field: 'email',
                             }
                         ]
                     })

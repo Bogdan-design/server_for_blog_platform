@@ -49,14 +49,14 @@ export const servicePosts = {
     async createComment({postId, content, userId}: {postId: string, content: string, userId: string}) {
 
 
-        const userLogin = await repositoryUsers.getUserById(userId.toString())
+        const userFromDB = await repositoryUsers.getUserById(userId.toString())
 
         const newComment:CommentType  = {
             postId,
             content,
             commentatorInfo:{
                 userId:userId.toString(),
-                userLogin:userLogin.login
+                userLogin:userFromDB.accountData.login
             },
             createdAt:new Date().toISOString(),
         }

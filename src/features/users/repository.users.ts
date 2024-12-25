@@ -1,6 +1,6 @@
 import {usersCollection} from "../../db/mongo.db";
 import {QueryModel} from "../../helpers/paginationQuereis";
-import {ObjectId} from "mongodb";
+import {ObjectId, WithId} from "mongodb";
 import {UserTypeDB} from "../../types/types";
 
 export const repositoryUsers = {
@@ -60,13 +60,13 @@ export const repositoryUsers = {
         if (loginOrEmail) {
             filter = {
                 $or: [
-                    {email: {$regex: `^${loginOrEmail}$`, $options: 'i'}},
-                    {login: {$regex: `^${loginOrEmail}$`, $options: 'i'}}
+                    { "accountData.login": { $regex: `^${loginOrEmail}$`, $options: "i" } },
+                    { "accountData.email": { $regex: `^${loginOrEmail}$`, $options: "i" } }
                 ]
             }
         }
 
-        const result = await usersCollection.findOne(filter)
+        const result = await usersCollection.findOne<WithId<UserTypeDB>>(filter)
         return result
     },
 

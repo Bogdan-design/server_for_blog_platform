@@ -69,7 +69,8 @@ export const usersController = {
             const {login,newUserFromDB,email,result} = await serviceUsers.createUser({
                 login:req.body.login,
                 password:req.body.password,
-                email:req.body.email
+                email:req.body.email,
+                confirmed:true
             });
 
             if(login) {

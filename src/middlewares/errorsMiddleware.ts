@@ -117,3 +117,15 @@ export const confirmationInputValidationBodyMiddleware = [
     )
 ]
 
+export const resendingEmailValidationBodyMiddleware= [
+    body('email').trim().notEmpty().isEmail(),
+    errorsMiddleware
+]
+
+export const registrationInputValidationBodyMiddleware = [
+    body("login").trim().notEmpty().isLength({min: 3, max: 10}).matches(/^[a-zA-Z0-9_-]*$/),
+    body("password").trim().notEmpty().isLength({min: 6, max: 20}),
+    body("email").trim().notEmpty().isEmail(),
+    errorsMiddleware
+]
+

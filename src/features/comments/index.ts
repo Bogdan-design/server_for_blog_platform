@@ -138,6 +138,6 @@ export const commentsController = {
 
 }
 
-commentsRouter.put('/:commentId', authBearerMiddleware,...commentsInputValidationParamsMiddleware, commentsController.updateComment)
+commentsRouter.put('/:commentId', authBearerMiddleware,commentsInputValidationParamsMiddleware, commentsController.updateComment)
 commentsRouter.delete('/:commentId', authBearerMiddleware, commentsController.deleteComment)
 commentsRouter.get('/:id', commentsController.getCommentById)

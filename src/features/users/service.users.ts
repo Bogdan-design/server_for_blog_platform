@@ -24,7 +24,7 @@ export const serviceUsers = {
             users
         }
     },
-    async createUser({login, password, email}: CreateUserModel) {
+    async createUser({login, password, email,confirmed}: CreateUserModel) {
 
         const passwordSalt = await bcrypt.genSalt()
         const passwordHash = await this._generateHash(password, passwordSalt)
@@ -41,7 +41,7 @@ export const serviceUsers = {
                 confirmationCode: uuidv4(),
                 expirationDate: add(new Date(),
                     {hours: 1, minutes: 0}),
-                isConfirmed: false
+                isConfirmed: !!confirmed
             }
 
         }

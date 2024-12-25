@@ -51,6 +51,10 @@ export type RegistrationType = {
     password: string
 }
 
+export type BlackListRefreshTokensType = {
+    refreshToken: string
+}
+
 export type CommentType = {
     id?: string
     postId: string

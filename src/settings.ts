@@ -19,5 +19,6 @@ export const SETTINGS = {
     POST_COLLECTION_NAME:'posts',
     USERS_COLLECTION_NAME:'users',
     COMMENTS_COLLECTION_NAME:'comments',
+    BLACK_LIST_REFRESH_TOKENS_NAME:'blackListRefreshTokens',
 
 }

@@ -1,6 +1,12 @@
 import express from "express";
 import {HTTP_STATUSES} from "../../status.code";
-import {blogCollection, commentsCollection, postCollection, usersCollection} from "../../db/mongo.db";
+import {
+    blackListCollection,
+    blogCollection,
+    commentsCollection,
+    postCollection,
+    usersCollection
+} from "../../db/mongo.db";
 
 export const testRouter = express.Router()
 
@@ -12,6 +18,7 @@ export const testingController = {
                 postCollection.deleteMany(),
                 usersCollection.deleteMany(),
                 commentsCollection.deleteMany(),
+                blackListCollection.deleteMany(),
             ])
 
             res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)

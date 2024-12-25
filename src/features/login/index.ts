@@ -5,7 +5,9 @@ import {serviceUsers} from "../../features/users/service.users";
 import {HTTP_STATUSES} from "../../status.code";
 import {
     authInputValidationBodyMiddleware,
-    confirmationInputValidationBodyMiddleware
+    confirmationInputValidationBodyMiddleware,
+    registrationInputValidationBodyMiddleware,
+    resendingEmailValidationBodyMiddleware
 } from "../../middlewares/errorsMiddleware";
 import {jwtService} from "../../application/jwt.service";
 import {authBearerMiddleware} from "../../middlewares/authBearerMiddleware";
@@ -28,36 +30,64 @@ export const authController = {
                 res.status(HTTP_STATUSES.UNAUTHORIZED_401).json({
                     "errorsMessages": [
                         {
-                            "message": "login or email incorrect",
-                            "field": "login or email"
+                            message: "login or email incorrect",
+                            field: "login or email"
                         }
                     ]
                 });
                 return
             }
 
-            const token = await jwtService.createJWT(user)
+            const {accessToken:token,refreshToken} = await jwtService.createJWT(user)
             if (!token) {
-                res.status(HTTP_STATUSES.UNAUTHORIZED_401).json({message: 'Some going wrong token'})
+                res
+                    .status(HTTP_STATUSES.UNAUTHORIZED_401)
+                    .json({message: 'Some going wrong token'})
                 return
             }
-            res.status(HTTP_STATUSES.OK_200).json({
+            res
+                .cookie('refreshToken', refreshToken, {httpOnly: true})
+                .status(HTTP_STATUSES.OK_200)
+                .json({
                 accessToken: token
             })
             return
 
         } catch (e: any) {
             res.status(HTTP_STATUSES.UNAUTHORIZED_401).json({
-                "errorsMessages": [
+                errorsMessages: [
                     {
-                        "message": "login or email incorrect",
-                        "field": "login or email"
+                        message: "login or email incorrect",
+                        field: "login or email"
                     }
                 ]
             })
             return
         }
 
+    },
+    async refresh(req: RequestWithBody<{ refreshToken: string }>, res: Response<any>) {
+
+        try{
+            const refreshToken = req.cookies['refreshToken']
+            if (!refreshToken) {
+                res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
+                return
+            }
+
+            const token = await jwtService.refreshToken(refreshToken)
+
+            res
+                .cookie('refreshToken', token.refreshToken, {httpOnly: true})
+                .status(HTTP_STATUSES.OK_200)
+                .json({accessToken: token.accessToken})
+            return
+
+        }catch (e){
+            res
+                .status(HTTP_STATUSES.UNAUTHORIZED_401).json('Unauthorized')
+            return
+        }
     },
     async confirmation(req: RequestWithBody<{ code: string }> & { user: WithId<UserTypeDB> }, res: Response<any>) {
         try {
@@ -67,11 +97,20 @@ export const authController = {
            const result =  await authService.confirmEmail(codeFromMessage)
 
             if (!result) {
-                res.status(HTTP_STATUSES.BAD_REQUEST_400).json({message: 'Code is not valid'})
+                res.status(HTTP_STATUSES.BAD_REQUEST_400).json({
+                    errorsMessages: [
+                        {
+                            message: "Code is not valid",
+                            field: "code"
+                        }
+                    ]
+                })
                 return
             }
 
-            res.status(HTTP_STATUSES.NO_CONTENT_204).json({message: 'Email was verified. Account was activated'})
+            res
+                .status(HTTP_STATUSES.NO_CONTENT_204)
+                .json({message: 'Email was verified. Account was activated'})
             return
         } catch (e) {
             console.error('Some error:', e)
@@ -114,7 +153,9 @@ export const authController = {
                 return
             }
 
-            res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+            res
+                .status(HTTP_STATUSES.NO_CONTENT_204)
+                .json({message: 'Confirmation message was sent'})
             return
 
         } catch (e) {
@@ -125,10 +166,11 @@ export const authController = {
         }
 
     },
-    async resending(req: RequestWithBody<CreateUserModel>, res: Response<any>) {
+    async resending(req: RequestWithBody<{email:string}>, res: Response<any>) {
         try {
             const email = await authService.resendEmailConfirmationMessage(req.body.email)
-            if (email) {
+
+            if (!email) {
                 res
                     .status(HTTP_STATUSES.BAD_REQUEST_400)
                     .json({
@@ -179,11 +221,14 @@ export const authController = {
             res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401)
             return
         }
-    }
+    },
+    async logout(req: any, res: Response<any>) {}
 }
 
 authRouter.post('/login', authInputValidationBodyMiddleware, authController.login)
+authRouter.post('/refresh-token',authBearerMiddleware, authController.refresh)
 authRouter.post('/registration-confirmation', confirmationInputValidationBodyMiddleware, authController.confirmation)
-authRouter.post('/registration', authController.registration)
-authRouter.post('/registration-email-resending', authController.resending)
+authRouter.post('/registration',registrationInputValidationBodyMiddleware, authController.registration)
+authRouter.post('/registration-email-resending',resendingEmailValidationBodyMiddleware, authController.resending)
+authRouter.post('/logout',authBearerMiddleware, authController.logout)
 authRouter.get('/me', authBearerMiddleware, authController.authMe)

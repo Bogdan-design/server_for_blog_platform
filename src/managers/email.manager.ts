@@ -8,11 +8,13 @@ export const emailsManager = {
             email:newUserFromDB.accountData.email,
             message: `<h1>Thanks for your registration</h1>
 <p>To finish registration please follow the link below:
-     <a href='https://somesite.com/confirm-email?${newUserFromDB.emailConfirmation.confirmationCode}=your_confirmation_code'>complete registration</a>
+     <a href='https://somesite.com/confirm-email?code=${newUserFromDB.emailConfirmation.confirmationCode}'>complete registration</a>
  </p>`,
             subject: 'Please confirm your email'
         })
+        console.log(newUserFromDB.emailConfirmation.confirmationCode)
     }
+
 }
 
 

@@ -15,6 +15,7 @@ import {repositoryUsers} from "../../features/users/repository.users";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import {WithId} from "mongodb";
 import {authService} from "../../features/login/authService";
+import {repositoryTokens} from "../../application/repository.tokens";
 
 export const authRouter = Router()
 
@@ -46,7 +47,7 @@ export const authController = {
                 return
             }
             res
-                .cookie('refreshToken', refreshToken, {httpOnly: true})
+                .cookie('refreshToken', refreshToken, {httpOnly: true, secure: true,})
                 .status(HTTP_STATUSES.OK_200)
                 .json({
                 accessToken: token
@@ -78,14 +79,15 @@ export const authController = {
             const token = await jwtService.refreshToken(refreshToken)
 
             res
-                .cookie('refreshToken', token.refreshToken, {httpOnly: true})
+                .cookie('refreshToken', token.refreshToken, {httpOnly: true, secure: true,})
                 .status(HTTP_STATUSES.OK_200)
                 .json({accessToken: token.accessToken})
             return
 
         }catch (e){
             res
-                .status(HTTP_STATUSES.UNAUTHORIZED_401).json('Unauthorized')
+                .status(HTTP_STATUSES.UNAUTHORIZED_401)
+                .json('Unauthorized')
             return
         }
     },
@@ -201,9 +203,17 @@ export const authController = {
         userId: string
     }>) {
         try {
-            const userId = req.user._id.toString();
 
-            const user = await repositoryUsers.getUserById(userId);
+            const token = req.cookies['refreshToken']
+
+            if (!token) {
+                res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401)
+                return
+            }
+
+            const userId = await jwtService.getUserIdByToken(token)
+
+            const user = await repositoryUsers.getUserById(userId.toString());
             if (!user) {
                 res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
                 return
@@ -222,13 +232,44 @@ export const authController = {
             return
         }
     },
-    async logout(req: any, res: Response<any>) {}
+    async logout(req: any, res: Response<any>) {
+        try{
+            const refreshToken = req.cookies['refreshToken']
+            if (!refreshToken) {
+                res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
+                return
+            }
+
+            const result = await repositoryTokens.checkInBlackList(refreshToken)
+            if (result) {
+                res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
+                return
+            }
+
+            const isExpiredToken = await jwtService.getUserIdByToken(refreshToken)
+            if (!isExpiredToken) {
+                res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
+                return
+            }
+
+            await repositoryTokens.saveRefreshToken(refreshToken)
+
+            res
+                .clearCookie('refreshToken')
+                .status(HTTP_STATUSES.NO_CONTENT_204)
+                .send('Logout')
+            return
+        } catch (e) {
+            res
+                .status(HTTP_STATUSES.UNAUTHORIZED_401).json('Unauthorized')
+            return
+    }}
 }
 
 authRouter.post('/login', authInputValidationBodyMiddleware, authController.login)
-authRouter.post('/refresh-token',authBearerMiddleware, authController.refresh)
+authRouter.post('/refresh-token',authController.refresh)
 authRouter.post('/registration-confirmation', confirmationInputValidationBodyMiddleware, authController.confirmation)
 authRouter.post('/registration',registrationInputValidationBodyMiddleware, authController.registration)
 authRouter.post('/registration-email-resending',resendingEmailValidationBodyMiddleware, authController.resending)
-authRouter.post('/logout',authBearerMiddleware, authController.logout)
+authRouter.post('/logout',authController.logout)
 authRouter.get('/me', authBearerMiddleware, authController.authMe)

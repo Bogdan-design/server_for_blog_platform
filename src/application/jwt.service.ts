@@ -26,8 +26,8 @@ export const jwtService = {
             if (!user) {
                 return null
             }
-
-            await repositoryTokens.checkInBlackList(refreshToken)
+            const resBlackList = await repositoryTokens.checkInBlackList(refreshToken)
+            if (resBlackList) return null
             await repositoryTokens.saveRefreshToken(refreshToken)
             return await this.createJWT(user)
 
@@ -35,7 +35,8 @@ export const jwtService = {
         } catch (e) {
             return null
         }
-    }
+    },
+
 
 
 }

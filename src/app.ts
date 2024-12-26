@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import {SETTINGS} from "./settings";
 import {blogsRouter} from "./features/blogs";
 import {testRouter} from "./features/testing/testing";
@@ -17,6 +18,8 @@ app.get('/', (req, res) => {
     res.send('Hello World!')
 })
 
+
+app.use(cookieParser())
 app.use(SETTINGS.PATH.LOGIN,authRouter)
 
 

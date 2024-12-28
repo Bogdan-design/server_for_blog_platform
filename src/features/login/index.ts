@@ -1,4 +1,4 @@
-import {Response, Router} from "express";
+import {Response, Router,Request} from "express";
 import {RequestWithBody, UserTypeDB} from "../../types/types";
 import {AuthLoginModel} from "../../features/login/AuthLoginModel";
 import {serviceUsers} from "../../features/users/service.users";
@@ -16,6 +16,7 @@ import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import {WithId} from "mongodb";
 import {authService} from "../../features/login/authService";
 import {repositoryTokens} from "../../application/repository.tokens";
+import {authRefreshTokenMiddleware} from "../../middlewares/authRefreshTokenMiddleware";
 
 export const authRouter = Router()
 
@@ -67,17 +68,22 @@ export const authController = {
         }
 
     },
-    async refresh(req: RequestWithBody<{ refreshToken: string }>, res: Response<any>) {
+    async refresh(req: Request & {user: WithId<UserTypeDB> }, res: Response<any>) : Promise<void> {
 
         try{
-            const refreshToken = req.cookies['refreshToken']
-            if (!refreshToken) {
+            const user:  WithId<UserTypeDB> = req.user
+
+            if (!user) {
                 res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
                 return
             }
 
-            const token = await jwtService.refreshToken(refreshToken)
+            const token = await jwtService.createJWT(user)
 
+            if (!token) {
+                res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
+                return
+            }
             res
                 .cookie('refreshToken', token.refreshToken, {httpOnly: true, secure: true,})
                 .status(HTTP_STATUSES.OK_200)
@@ -85,6 +91,7 @@ export const authController = {
             return
 
         }catch (e){
+            console.log(e)
             res
                 .status(HTTP_STATUSES.UNAUTHORIZED_401)
                 .json('Unauthorized')
@@ -197,23 +204,19 @@ export const authController = {
         }
 
     },
-    async authMe(req: any, res: Response<{
+    async authMe(req: Request & {user: WithId<UserTypeDB> }, res: Response<{
         email: string
         login: string
         userId: string
     }>) {
         try {
 
-            const token = req.cookies['refreshToken']
 
-            if (!token) {
-                res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401)
-                return
-            }
 
-            const userId = await jwtService.getUserIdByToken(token)
+            const userId: string = req.user._id.toString()
 
-            const user = await repositoryUsers.getUserById(userId.toString());
+
+            const user = await repositoryUsers.getUserById(userId);
             if (!user) {
                 res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
                 return
@@ -234,25 +237,6 @@ export const authController = {
     },
     async logout(req: any, res: Response<any>) {
         try{
-            const refreshToken = req.cookies['refreshToken']
-            if (!refreshToken) {
-                res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
-                return
-            }
-
-            const result = await repositoryTokens.checkInBlackList(refreshToken)
-            if (result) {
-                res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
-                return
-            }
-
-            const isExpiredToken = await jwtService.getUserIdByToken(refreshToken)
-            if (!isExpiredToken) {
-                res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
-                return
-            }
-
-            await repositoryTokens.saveRefreshToken(refreshToken)
 
             res
                 .clearCookie('refreshToken')
@@ -267,9 +251,9 @@ export const authController = {
 }
 
 authRouter.post('/login', authInputValidationBodyMiddleware, authController.login)
-authRouter.post('/refresh-token',authController.refresh)
+authRouter.post('/refresh-token',authRefreshTokenMiddleware,authController.refresh)
 authRouter.post('/registration-confirmation', confirmationInputValidationBodyMiddleware, authController.confirmation)
 authRouter.post('/registration',registrationInputValidationBodyMiddleware, authController.registration)
 authRouter.post('/registration-email-resending',resendingEmailValidationBodyMiddleware, authController.resending)
-authRouter.post('/logout',authController.logout)
+authRouter.post('/logout',authRefreshTokenMiddleware,authController.logout)
 authRouter.get('/me', authBearerMiddleware, authController.authMe)

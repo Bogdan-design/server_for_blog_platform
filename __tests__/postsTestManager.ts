@@ -1,7 +1,7 @@
 import {SETTINGS} from "../src/settings";
 import {req} from "./test.helpers";
 import {HTTP_STATUSES, HttpStatusType} from "../src/status.code";
-import {BlogType, ExpectedErrorObjectType} from "../src/types/types";
+import {BlogType, ExpectedErrorObjectType, PostType} from "../src/types/types";
 import {CreatePostModel} from "../src/features/posts/models/CreatePostModel";
 import {blogsTestManager} from "./blogsTestManager";
 import {newBlogModel} from "./datasets";
@@ -11,7 +11,7 @@ export const postsTestManager = {
     async createPost(codedAuth: string,
                      expectedStatusCode: HttpStatusType = HTTP_STATUSES.CREATED_201,
                      data?: CreatePostModel,
-                     expectedObject?: ExpectedErrorObjectType | BlogType) {
+                     expectedObject?: ExpectedErrorObjectType | PostType) {
 
         const resBlog = await blogsTestManager.createBlog(newBlogModel, codedAuth)
 
@@ -38,6 +38,7 @@ export const postsTestManager = {
                 content: res.body.content,
                 blogId: res.body.blogId,
                 blogName: res.body.blogName,
+                createdAt: res.body.createdAt
             })
         }
 

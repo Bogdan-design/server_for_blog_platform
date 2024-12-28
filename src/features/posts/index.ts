@@ -8,6 +8,7 @@ import {
 } from '../../middlewares/errorsMiddleware';
 import {HTTP_STATUSES} from "../../status.code";
 import {
+    ExpectedErrorObjectType,
     ObjectModelFromDB,
     PostType,
     RequestWithParams,
@@ -199,9 +200,14 @@ export const postsController = {
 
     },
 
-    async deletePost(req: RequestWithParams<PostParamsType>, res: any) {
+    async deletePost(req: RequestWithParams<PostParamsType>, res: Response<ExpectedErrorObjectType | {error: string}>): Promise<void> {
         try {
             const postId = req.params.id
+
+            if(!ObjectId.isValid(postId)){
+                res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Invalid post ID"})
+                return
+            }
 
             const resDelete = await servicePosts.deletePost(postId)
 
@@ -229,7 +235,7 @@ export const postsController = {
             const id = req.params.postId;
 
             const findPostById = await repositoryPosts.findPostByPostId(id)
-            if(!findPostById) {
+            if (!findPostById) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
                 return
             }
@@ -263,7 +269,7 @@ export const postsController = {
 
         try {
             const postId = req.params.postId;
-            if(!postId){
+            if (!postId || !ObjectId.isValid(postId)) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
                 return
             }
@@ -278,7 +284,7 @@ export const postsController = {
                 pageSize,
                 sortBy,
                 sortDirection
-            }=paginationQueryForQueries(req.query)
+            } = paginationQueryForQueries(req.query)
 
             const getComments = await serviceComments.getCommentsByPostId({
                 pageNumber,
@@ -300,11 +306,11 @@ export const postsController = {
 
 }
 
-postsRouter.get('/:postId/comments',postsController.getCommentsByPostId);
+postsRouter.get('/:postId/comments', postsController.getCommentsByPostId);
 
-postsRouter.post('/:postId/comments', authBearerMiddleware,...postInputValidationCommentBodyValidationMiddleware, postsController.createComment);
+postsRouter.post('/:postId/comments', authBearerMiddleware, ...postInputValidationCommentBodyValidationMiddleware, postsController.createComment);
 postsRouter.get('/', errorsMiddleware, postsController.getPosts);
 postsRouter.post('/', authMiddleware, blogIdValidation, postInputValidationBodyMiddleware, postsController.createPost);
 postsRouter.get('/:id', idValidation, errorsMiddleware, postsController.findPost);
 postsRouter.put('/:id', authMiddleware, idValidation, blogIdValidation, postInputValidationBodyMiddleware, postsController.updatePost);
-postsRouter.delete('/:id', authMiddleware, idValidation, postsController.deletePost);
+postsRouter.delete('/:id', authMiddleware, idValidation,errorsMiddleware, postsController.deletePost);

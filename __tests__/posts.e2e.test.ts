@@ -4,21 +4,38 @@ import {HTTP_STATUSES} from "../src/status.code";
 import {authTestManager} from "./authTestManager";
 import {postsTestManager} from "./postsTestManager";
 import {codedAuth, expectedErrorPostModel, notValidPostModel} from "./datasets";
+import {Collection, Db} from "mongodb";
+import {ObjectModelFromDB, PostType} from "../src/types/types";
+import {getInMemoryDb, stopInMemoryDb} from "./test.db";
 
 describe('/posts', () => {
 
+    let db: Db;
+    let postCollection: Collection<PostType>;
+
 
     beforeAll(async () => {
+
+        db = await getInMemoryDb()
+        postCollection = db.collection<PostType>("posts");
 
         await req
             .delete(`${SETTINGS.PATH.TESTING}/all-data`)
             .expect(HTTP_STATUSES.NO_CONTENT_204)
     })
 
+    beforeEach(async () => {
+        await postCollection.deleteMany({})
+    })
+
+    afterAll(async () => {
+        await stopInMemoryDb();
+    })
+
     it('+Should return empty array with status 200', async () => {
         await req
             .get(SETTINGS.PATH.POSTS)
-            .expect(HTTP_STATUSES.OK_200, [])
+            .expect(HTTP_STATUSES.OK_200, {pagesCount: 0, page: 1, pageSize: 10, totalCount: 0, items: []})
     })
 
     it('-Should be unauthorized', async () => {
@@ -34,11 +51,12 @@ describe('/posts', () => {
     it('-POST does not create the blog without required ore incorrect  data from client (name,description,URI)', async () => {
 
 
-        await postsTestManager.createPost(codedAuth,HTTP_STATUSES.BAD_REQUEST_400,notValidPostModel,expectedErrorPostModel)
+        await postsTestManager.createPost(codedAuth, HTTP_STATUSES.BAD_REQUEST_400, notValidPostModel, expectedErrorPostModel)
 
         const res = await req
             .get(SETTINGS.PATH.POSTS)
-        expect(res.body).toEqual([])
+        expect(res.body).toEqual<ObjectModelFromDB<PostType>>({pagesCount: 0, page: 1, pageSize: 10, totalCount: 0, items: []})
+
 
     })
 
@@ -58,12 +76,12 @@ describe('/posts', () => {
     it('+GET find some entity by id', async () => {
 
 
-       const res = await postsTestManager.createPost(codedAuth)
+        const res = await postsTestManager.createPost(codedAuth)
 
         const foundPost = await req
             .get(`${SETTINGS.PATH.POSTS}/${res.body.id}`)
             .expect(HTTP_STATUSES.OK_200)
-        expect(res.body).toEqual(foundPost.body)
+        expect(res.body).toEqual<PostType>(foundPost.body)
     })
 
     it('-PUT does not change entity with incorrect data', async () => {
@@ -74,20 +92,8 @@ describe('/posts', () => {
         await req
             .put(`${SETTINGS.PATH.POSTS}/${res.body.id}`)
             .set({'Authorization': `Basic ${codedAuth}`})
-            .send({
-                title: '',
-                shortDescription: '',
-                content: '',
-                blogId: ''
-            })
-            .expect(HTTP_STATUSES.BAD_REQUEST_400, {
-                errorsMessages: [
-                    {message: "Invalid value", field: "title"},
-                    {message: 'Invalid value', field: 'shortDescription'},
-                    {message: 'Invalid value', field: 'content'},
-                    {message: 'Invalid value', field: 'blogId'}
-                ]
-            })
+            .send(notValidPostModel)
+            .expect(HTTP_STATUSES.BAD_REQUEST_400,expectedErrorPostModel)
     })
 
     it('+PUT should change data with status code 204 if not beck status code 404', async () => {
@@ -108,13 +114,14 @@ describe('/posts', () => {
         const getPostById = await req
             .get(`${SETTINGS.PATH.POSTS}/${res.body.id}`)
 
-        expect(getPostById.body).toStrictEqual({
+        expect(getPostById.body).toEqual<PostType>({
             id: res.body.id,
             title: 'Some title2',
             shortDescription: 'Some description2',
             content: 'Some content',
             blogId: res.body.blogId,
             blogName: res.body.blogName,
+            createdAt: res.body.createdAt
         })
 
     })
@@ -129,7 +136,7 @@ describe('/posts', () => {
 
     it('+DELETE should delete the entity by id', async () => {
 
-        const res =  await postsTestManager.createPost(codedAuth)
+        const res = await postsTestManager.createPost(codedAuth)
 
         await req
             .delete(`${SETTINGS.PATH.POSTS}/${res.body.id}`)

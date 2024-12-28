@@ -37,10 +37,10 @@ export const expectedErrorBlogModel: ExpectedErrorObjectType = {
 
 export const expectedErrorPostModel: ExpectedErrorObjectType = {
     errorsMessages: [
+        {message: 'Invalid value', field: 'blogId'},
         {message: "Invalid value", field: "title"},
         {message: 'Invalid value', field: 'shortDescription'},
         {message: 'Invalid value', field: 'content'},
-        {message: 'Invalid value', field: 'blogId'}
     ]
 }
 

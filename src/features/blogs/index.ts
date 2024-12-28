@@ -38,7 +38,6 @@ const getBlogViewModel = (dbBlog: WithId<BlogType>): BlogType => {
 }
 
 export const blogsController = {
-    //RequestWithQuery<QueryBlogModel>
 
     async getBlogs  (req: any, res: Response<ObjectModelFromDB<BlogType> | { error: string }>): Promise<void>  {
         try {
@@ -183,7 +182,7 @@ export const blogsController = {
     async findBlog (req: RequestWithParams<BlogParamsType>, res: Response<BlogType | { error: string }>):Promise<void> {
         try {
             const blogId = req.params.id;
-            if (!blogId) {
+            if (!blogId || !ObjectId.isValid(blogId)) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
                     .json({error: "Bad Request"})
@@ -255,6 +254,12 @@ export const blogsController = {
         try {
 
             const blogId = req.params.id;
+            if(!ObjectId.isValid(blogId)){
+                res
+                    .status(HTTP_STATUSES.NOT_FOUND_404)
+                    .json({error: "Invalid blog ID"})
+                return
+            }
 
             const resDelete = await serviceBlogs.deleteBlog(blogId);
 

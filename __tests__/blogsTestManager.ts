@@ -1,7 +1,7 @@
 import {SETTINGS} from "../src/settings";
 import {req} from "./test.helpers";
 import {CreateBlogModel} from "../src/features/blogs/models/CreateBlogModel";
-import {HTTP_STATUSES, HttpStatusType} from "../src/status.code";
+import {HTTP_STATUSES} from "../src/status.code";
 import {BlogType, ExpectedErrorObjectType} from "../src/types/types";
 
 

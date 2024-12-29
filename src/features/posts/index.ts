@@ -88,7 +88,7 @@ export const postsController = {
 
     async createPost(
         req: RequestWithParamsAndBody<{ blogId: string }, CreatePostByBlogIdParamsModel>,
-        res: Response<PostType | { error: string }>
+        res: Response<PostType | ExpectedErrorObjectType | { error: string }>
     ) {
         try {
             const blogId = req.params.blogId || req.body.blogId;
@@ -96,7 +96,14 @@ export const postsController = {
             if (!blogId || typeof blogId !== "string" || !ObjectId.isValid(blogId)) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
-                    .json({error: "Invalid blog ID"});
+                    .json({
+                        errorsMessages:[
+                            {
+                                field: 'blogId',
+                                message: 'Wrong blogId'
+                            }
+                        ]
+                    });
                 return
             }
 

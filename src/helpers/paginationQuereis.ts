@@ -1,15 +1,14 @@
 import {SortDirection} from "mongodb";
-import {RequestWithQuery} from "../types/types";
 
-export const paginationQueries = (req:RequestWithQuery<QueryModel>) => {
+export const paginationQueries = (query:QueryModel):QueryModel  => {
 
-    let pageNumber = req.query.pageNumber ? +req.query.pageNumber : 1
-    let pageSize = req.query.pageSize !== undefined ? +req.query.pageSize : 10
-    let sortBy = req.query.sortBy ? req.query.sortBy : 'createdAt'
-    let sortDirection = req.query.sortDirection ? req.query.sortDirection as SortDirection : 'desc'
-    let searchNameTerm = req.query.searchNameTerm ? req.query.searchNameTerm : null
-    let searchLoginTerm = req.query.searchLoginTerm ? req.query.searchLoginTerm : null
-    let searchEmailTerm = req.query.searchEmailTerm ? req.query.searchEmailTerm : null
+    let pageNumber =  query.pageNumber ? +query.pageNumber : 1
+    let pageSize =query.pageSize !== undefined ? +query.pageSize : 10
+    let sortBy = query.sortBy ? query.sortBy : 'createdAt'
+    let sortDirection = query.sortDirection ? query.sortDirection as SortDirection : 'desc'
+    let searchNameTerm = query.searchNameTerm ? query.searchNameTerm : null
+    let searchLoginTerm = query.searchLoginTerm ? query.searchLoginTerm : null
+    let searchEmailTerm = query.searchEmailTerm ? query.searchEmailTerm : null
 
     return {
         pageNumber,
@@ -24,7 +23,7 @@ export const paginationQueries = (req:RequestWithQuery<QueryModel>) => {
 
 export type QueryModel = {
     pageNumber: number,
-    pageSize: number,
+    pageSize: number | undefined,
     sortBy: string  ,
     sortDirection: SortDirection,
     searchNameTerm?: string,

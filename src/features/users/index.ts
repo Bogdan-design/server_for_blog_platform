@@ -27,10 +27,12 @@ const getUsersViewModel = (dbUser: WithId<UserTypeDB>): UserType => {
     }
 }
 
+
 export const usersController = {
-    getUsers: async (req: RequestWithQuery<QueryModel>, res:  Response<ObjectModelFromDB<UserType> | { error: string }>) => {
+    async getUsers(req: RequestWithQuery<QueryModel> , res:Response<ObjectModelFromDB<UserType> | { error: string }>):Promise<void>{
         try {
-            const paginationQueriesForUsers: QueryModel = paginationQueries(req)
+            const query = req.query
+            const paginationQueriesForUsers: QueryModel = paginationQueries(query)
 
             const usersFromDB = await serviceUsers.getUsers(
                 paginationQueriesForUsers
@@ -57,7 +59,7 @@ export const usersController = {
         } catch (e) {
             res
                 .status(HTTP_STATUSES.NOT_FOUND_404)
-                .json({'error': 'Not Found'})
+                .json({error: 'Not Found'})
             return
         }
     },
@@ -126,7 +128,7 @@ export const usersController = {
             return
         }
     },
-    deleteUser: async (req: RequestWithParams<UserId>, res: Response<{error:string}>) => {
+    deleteUser: async (req: RequestWithParams<UserId>&{}, res: Response<{error:string}>) => {
         try{
             if(!req.params.id){
                 res
@@ -155,6 +157,6 @@ export const usersController = {
     },
 }
 
-usersRouter.get('/', usersController.getUsers)
+usersRouter.get('/',authMiddleware, usersController.getUsers)
 usersRouter.post('/',authMiddleware,userInputValidationBodyMiddleware, usersController.createUser)
 usersRouter.delete('/:id',authMiddleware, idValidation, usersController.deleteUser)

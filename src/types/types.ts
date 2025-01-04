@@ -37,6 +37,17 @@ export type UserType = {
     createdAt: string,
 }
 
+export type SessionType ={
+    ip:string
+    baseUrl:string
+}
+
+export type SecurityDBType ={
+    ip:string
+    baseUrl:string
+    date:string
+}
+
 export type UserTypeDB= {
     accountData: UserType
     emailConfirmation: {
@@ -70,6 +81,7 @@ type ErrorMessage = {
     message: string;
     field: string;
 }
+
 export type ExpectedErrorObjectType = {
     errorsMessages: ErrorMessage[]
 }

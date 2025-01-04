@@ -11,6 +11,7 @@ export const SETTINGS = {
         TESTING:'/testing',
         LOGIN:'/auth',
         COMMENTS:'/comments',
+        SECURITY:'/security'
     },
     AUTH_TOKEN:process.env.AUTH_TOKEN || 'admin:qwerty',
     MONGO_URI:process.env.MONGO_URL || 'mongodb://0.0.0.0:27017',
@@ -20,5 +21,5 @@ export const SETTINGS = {
     USERS_COLLECTION_NAME:'users',
     COMMENTS_COLLECTION_NAME:'comments',
     BLACK_LIST_REFRESH_TOKENS_NAME:'blackListRefreshTokens',
-
+    SECURITY:'security',
 }

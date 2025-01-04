@@ -26,6 +26,7 @@ export const authRefreshTokenMiddleware = async (req: any, res: Response<any>, n
         req.user = await repositoryUsers.getUserById(userId.toString());
 
 
+
         return next()
 
     }

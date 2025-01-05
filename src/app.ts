@@ -9,6 +9,7 @@ import {usersRouter} from "./features/users";
 import {authRouter} from "./features/login";
 import {commentsRouter} from "./features/comments";
 import {securityRouter} from "./features/security";
+import session from "express-session";
 
 export const app = express()
 
@@ -21,10 +22,21 @@ app.get('/', (req, res) => {
 
 
 app.use(cookieParser())
-app.use(SETTINGS.PATH.LOGIN,authRouter)
-app.use(SETTINGS.PATH.BLOGS,blogsRouter);
-app.use(SETTINGS.PATH.COMMENTS,commentsRouter)
-app.use(SETTINGS.PATH.POSTS,postsRouter);
-app.use(SETTINGS.PATH.USERS,usersRouter);
-app.use(SETTINGS.PATH.TESTING,testRouter);
-app.use(SETTINGS.PATH.SECURITY,securityRouter);
+app.set('trust proxy', true)
+
+const sass = {
+    secret: process.env.JWT_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {maxAge: 30 * 60 * 1000}
+}
+
+app.use(session(sass))
+
+app.use(SETTINGS.PATH.LOGIN, authRouter)
+app.use(SETTINGS.PATH.BLOGS, blogsRouter);
+app.use(SETTINGS.PATH.COMMENTS, commentsRouter)
+app.use(SETTINGS.PATH.POSTS, postsRouter);
+app.use(SETTINGS.PATH.USERS, usersRouter);
+app.use(SETTINGS.PATH.TESTING, testRouter);
+app.use(SETTINGS.PATH.SECURITY, securityRouter);

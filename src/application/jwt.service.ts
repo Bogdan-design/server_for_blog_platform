@@ -1,6 +1,7 @@
 import {UserTypeDB} from "../types/types";
 import jwt, {JwtPayload} from "jsonwebtoken";
 import {ObjectId, WithId} from "mongodb";
+import {v4 as uuidv4} from "uuid";
 
 export const jwtService = {
     async createJWT(user: WithId<UserTypeDB>) {
@@ -18,6 +19,14 @@ export const jwtService = {
             return null;
         }
     },
+    async slidingExpirationTime (){
+
+        const notAuthorisedSessionId = uuidv4()
+
+        const sid = jwt.sign({userid:notAuthorisedSessionId}, process.env.JWT_SECRET, {expiresIn: '1h'})
+
+        return sid
+    }
 
 
 

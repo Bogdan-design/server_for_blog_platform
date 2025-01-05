@@ -1,8 +1,8 @@
-import {SecurityDBType, SessionType} from "../../types/types";
-import {securityCollection} from "../../db/mongo.db";
+import {SessionDBType, SessionType} from "../../types/types";
+import {sessionCollection} from "../../db/mongo.db";
 
 export const securityRepository = {
-    async saveSession (data: SecurityDBType){
-        return await securityCollection.insertOne(data)
+    async saveSession (data: SessionDBType){
+        return await sessionCollection.insertOne(data)
     }
 }

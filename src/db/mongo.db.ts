@@ -4,7 +4,7 @@ import {
     BlogType,
     CommentType,
     PostType,
-    SecurityDBType,
+    SessionDBType,
     UserTypeDB
 } from "../../src/types/types";
 import {SETTINGS} from "../settings";
@@ -17,7 +17,7 @@ export const postCollection: Collection<PostType> = db.collection<PostType>(SETT
 export const usersCollection: Collection<UserTypeDB> = db.collection<UserTypeDB>(SETTINGS.USERS_COLLECTION_NAME)
 export const commentsCollection: Collection<CommentType> = db.collection<CommentType>(SETTINGS.COMMENTS_COLLECTION_NAME)
 export const blackListCollection: Collection<BlackListRefreshTokensType> = db.collection<BlackListRefreshTokensType>(SETTINGS.BLACK_LIST_REFRESH_TOKENS_NAME)
-export const securityCollection: Collection<SecurityDBType> = db.collection<SecurityDBType>(SETTINGS.SECURITY)
+export const sessionCollection: Collection<SessionDBType> = db.collection<SessionDBType>(SETTINGS.SECURITY)
 
 export const connectToDB = async () => {
     try {

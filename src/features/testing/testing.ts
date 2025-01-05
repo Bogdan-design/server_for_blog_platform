@@ -4,7 +4,7 @@ import {
     blackListCollection,
     blogCollection,
     commentsCollection,
-    postCollection, securityCollection,
+    postCollection, sessionCollection,
     usersCollection
 } from "../../db/mongo.db";
 
@@ -19,7 +19,7 @@ export const testingController = {
                 usersCollection.deleteMany(),
                 commentsCollection.deleteMany(),
                 blackListCollection.deleteMany(),
-                securityCollection.deleteMany()
+                sessionCollection.deleteMany()
             ])
 
             res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)

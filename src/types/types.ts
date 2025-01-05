@@ -42,7 +42,12 @@ export type SessionType ={
     baseUrl:string
 }
 
-export type SecurityDBType ={
+export type SessionDBType ={
+    userId:string
+    deviceId:string
+    title:string
+    exp:Date
+    iat:Date
     ip:string
     baseUrl:string
     date:string

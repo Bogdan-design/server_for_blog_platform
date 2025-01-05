@@ -1,6 +1,8 @@
 import {repositoryUsers} from "../../features/users/repository.users";
 import {emailsManager} from "../../managers/email.manager";
 import {v4 as uuidv4} from "uuid";
+import {SessionDBType, SessionType} from "../../types/types";
+import {securityRepository} from "../../features/security/repository.security";
 
 export const authService = {
     async confirmEmail(code: string) {
@@ -25,5 +27,29 @@ export const authService = {
             return false
         }
         return true
-    }
+    },
+    // async saveSession (data: SessionType){
+    //
+    //     const newSession: SessionDBType = {
+    //         userId: data.ip,
+    //         ip: data.ip,
+    //         baseUrl: data.baseUrl,
+    //         date: new Date().toISOString(),
+    //         deviceId: uuidv4()
+    //     }
+    //
+    //     const res = await securityRepository.saveSession(newSession)
+    //     if(!res.acknowledged){
+    //         throw new Error('Error while saving session')
+    //     }
+    //
+    //
+    //
+    //     return{
+    //
+    //     }
+    // },
+
+
+
 }

@@ -17,6 +17,7 @@ import {WithId} from "mongodb";
 import {authService} from "../../features/login/authService";
 import {repositoryTokens} from "../../application/repository.tokens";
 import {authRefreshTokenMiddleware} from "../../middlewares/authRefreshTokenMiddleware";
+import {sessionMiddleware} from "../../middlewares/sessionMiddleware";
 
 export const authRouter = Router()
 
@@ -250,7 +251,7 @@ export const authController = {
     }}
 }
 
-authRouter.post('/login', authInputValidationBodyMiddleware, authController.login)
+authRouter.post('/login',sessionMiddleware, authInputValidationBodyMiddleware, authController.login)
 authRouter.post('/refresh-token',authRefreshTokenMiddleware,authController.refresh)
 authRouter.post('/registration-confirmation', confirmationInputValidationBodyMiddleware, authController.confirmation)
 authRouter.post('/registration',registrationInputValidationBodyMiddleware, authController.registration)

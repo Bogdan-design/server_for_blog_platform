@@ -29,7 +29,8 @@ const getUsersViewModel = (dbUser: WithId<UserTypeDB>): UserType => {
 
 
 export const usersController = {
-    async getUsers(req: RequestWithQuery<QueryModel> , res:Response<ObjectModelFromDB<UserType> | { error: string }>):Promise<void>{
+    async getUsers(req: any , res:Response<ObjectModelFromDB<UserType> | { error: string }>):Promise<void>{
+        // RequestWithQuery<QueryModel>
         try {
             const query = req.query
             const paginationQueriesForUsers: QueryModel = paginationQueries(query)

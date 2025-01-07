@@ -32,13 +32,13 @@ describe('/posts', () => {
         await stopInMemoryDb();
     })
 
-    it('+Should return empty array with status 200', async () => {
+    it('+GET Should return empty array with status 200', async () => {
         await req
             .get(SETTINGS.PATH.POSTS)
             .expect(HTTP_STATUSES.OK_200, {pagesCount: 0, page: 1, pageSize: 10, totalCount: 0, items: []})
     })
 
-    it('-Should be unauthorized', async () => {
+    it('-POST Should be unauthorized', async () => {
 
         const codedAuth = authTestManager.authForTests("Wrong token")
 

@@ -38,19 +38,19 @@ export type UserType = {
 }
 
 export type SessionType ={
-    ip:string
-    baseUrl:string
+    ip:string | string []
+    url:string
+    date:Date
 }
 
-export type SessionDBType ={
+export type DeviceSessionDBType ={
     userId:string
-    deviceId:string
+    deviceId?:string
     title:string
-    exp:Date
-    iat:Date
+    exp:string
+    iat:string
     ip:string
     baseUrl:string
-    date:string
 }
 
 export type UserTypeDB= {

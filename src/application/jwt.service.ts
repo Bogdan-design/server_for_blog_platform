@@ -13,6 +13,10 @@ export const jwtService = {
         try {
             const secret =  process.env.JWT_SECRET
             const payload = await jwt.verify(token,secret);
+            if(typeof payload === 'string'){
+                throw new Error('payload is string')
+
+            }
             return new ObjectId((payload as JwtPayload & { userId: string }).userId)
         } catch (e) {
             console.log(e)

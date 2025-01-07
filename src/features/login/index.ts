@@ -1,4 +1,4 @@
-import {Response, Router,Request} from "express";
+import {Request, Response, Router} from "express";
 import {RequestWithBody, UserTypeDB} from "../../types/types";
 import {AuthLoginModel} from "../../features/login/AuthLoginModel";
 import {serviceUsers} from "../../features/users/service.users";
@@ -15,17 +15,23 @@ import {repositoryUsers} from "../../features/users/repository.users";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import {WithId} from "mongodb";
 import {authService} from "../../features/login/authService";
-import {repositoryTokens} from "../../application/repository.tokens";
 import {authRefreshTokenMiddleware} from "../../middlewares/authRefreshTokenMiddleware";
-import {sessionMiddleware} from "../../middlewares/sessionMiddleware";
+import {securityService} from "../../features/security/service.security";
 
 export const authRouter = Router()
 
 
 export const authController = {
     async login(req: RequestWithBody<AuthLoginModel>, res: Response<any>) {
+
+
         try {
             const {loginOrEmail, password} = req.body;
+            const titleForParsing = req.headers['user-agent']
+
+            const ip = req.headers['Remote address']
+
+            const baseUrl = req.baseUrl
 
             const user = await serviceUsers.checkCredentials(loginOrEmail, password);
 
@@ -48,6 +54,13 @@ export const authController = {
                     .json({message: 'Some going wrong token'})
                 return
             }
+            if(Array.isArray(ip)){
+                res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401)
+                return
+            }
+
+            await securityService.securityRepository({titleForParsing,baseUrl,ip,token})
+
             res
                 .cookie('refreshToken', refreshToken, {httpOnly: true, secure: true,})
                 .status(HTTP_STATUSES.OK_200)
@@ -251,7 +264,7 @@ export const authController = {
     }}
 }
 
-authRouter.post('/login',sessionMiddleware, authInputValidationBodyMiddleware, authController.login)
+authRouter.post('/login',authInputValidationBodyMiddleware, authController.login)
 authRouter.post('/refresh-token',authRefreshTokenMiddleware,authController.refresh)
 authRouter.post('/registration-confirmation', confirmationInputValidationBodyMiddleware, authController.confirmation)
 authRouter.post('/registration',registrationInputValidationBodyMiddleware, authController.registration)

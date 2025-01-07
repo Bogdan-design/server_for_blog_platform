@@ -28,7 +28,7 @@ const sass = {
     secret: process.env.JWT_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: {maxAge: 30 * 60 * 1000}
+    cookie: {secure: true,maxAge: 30 * 60 * 1000}
 }
 
 app.use(session(sass))

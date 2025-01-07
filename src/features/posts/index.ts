@@ -1,10 +1,11 @@
 import {Response, Router} from "express";
 import {ObjectId, WithId} from "mongodb";
 import {
-    blogIdValidation, commentsInputValidationParamsMiddleware,
+    blogIdValidation,
     errorsMiddleware,
-    idValidation, postIdParamValidation,
-    postInputValidationBodyMiddleware, postInputValidationCommentBodyValidationMiddleware
+    idValidation,
+    postInputValidationBodyMiddleware,
+    postInputValidationCommentBodyValidationMiddleware
 } from '../../middlewares/errorsMiddleware';
 import {HTTP_STATUSES} from "../../status.code";
 import {

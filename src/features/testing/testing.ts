@@ -3,7 +3,7 @@ import {HTTP_STATUSES} from "../../status.code";
 import {
     blackListCollection,
     blogCollection,
-    commentsCollection,
+    commentsCollection, devisesCollection,
     postCollection, sessionCollection,
     usersCollection
 } from "../../db/mongo.db";
@@ -19,7 +19,8 @@ export const testingController = {
                 usersCollection.deleteMany(),
                 commentsCollection.deleteMany(),
                 blackListCollection.deleteMany(),
-                sessionCollection.deleteMany()
+                sessionCollection.deleteMany(),
+                devisesCollection.deleteMany()
             ])
 
             res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)

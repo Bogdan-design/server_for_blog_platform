@@ -4,9 +4,9 @@ import {ObjectId, WithId} from "mongodb";
 import {v4 as uuidv4} from "uuid";
 
 export const jwtService = {
-    async createJWT(user: WithId<UserTypeDB>, id?: ObjectId) {
+    async createJWT(user: WithId<UserTypeDB>, id?: string) {
 
-        const deviceId = id ? id.toString() : uuidv4()
+        const deviceId = id ? id : uuidv4()
 
         const accessToken = jwt.sign({userId: user._id.toString()}, process.env.JWT_SECRET, {expiresIn: process.env.JWT_EXPIRES});
 

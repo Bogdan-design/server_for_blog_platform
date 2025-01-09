@@ -26,11 +26,20 @@ export const securityRepository = {
     async saveDeviseDataToDB (data:DeviceSessionDBType){
         return devicesCollection.insertOne(data)
     },
-    async deleteAllDevices (deviceId:string){
+    async deleteAllDevices (userId:ObjectId,deviceId:string){
         return devicesCollection.deleteMany(
             {
-                $nor: [{ deviceId: {$regex: deviceId} }]
+                $nor: [
+                    { userId: userId.toString(),deviceId:deviceId }
+                ]
             }
         )
+    },
+    async deleteDevice (deviceId:string){
+        return await devicesCollection.deleteOne({deviceId:deviceId})
+    },
+    async findUserByDeviceId (deviceId:string) {
+        return await devicesCollection.findOne({deviceId:deviceId})
     }
+
 }

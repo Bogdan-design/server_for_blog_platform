@@ -7,21 +7,21 @@ import {ObjectId} from "mongodb";
 
 export const securityRouter = Router()
 
-const getDevisesViewModel = (dbDevise:DeviceSessionDBType)=>{
-    return{
-        ip:dbDevise.ip,
-        title:dbDevise.title,
-        lastActiveDate:dbDevise.iat,
-        deviceId:dbDevise.deviceId
+const getDevisesViewModel = (dbDevise: DeviceSessionDBType) => {
+    return {
+        ip: dbDevise.ip,
+        title: dbDevise.title,
+        lastActiveDate: dbDevise.iat,
+        deviceId: dbDevise.deviceId
     }
 }
 
 
 export const securityController = {
 
-    async getAllActiveDevices(req: Request<any> & {user:{_id:ObjectId}}, res: Response<any>): Promise<void> {
+    async getAllActiveDevices(req: Request<any> & { user: { _id: ObjectId } }, res: Response<any>): Promise<void> {
 
-        try{
+        try {
 
             const userId = req.user._id.toString()
             const devises = await securityService.getAllActiveDevisesByUserId(userId)
@@ -31,7 +31,7 @@ export const securityController = {
                 .json(devises.map(getDevisesViewModel))
             return
 
-        }catch(e){
+        } catch (e) {
             console.log(e)
             res
                 .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
@@ -40,15 +40,64 @@ export const securityController = {
         }
 
     },
-    async deleteNotUseDevices (req:Request<any>& {user:{_id:ObjectId}}, res:Response<any>){
+    async deleteNotUseDevices(req: Request<any> & { user: { _id: ObjectId } }, res: Response<any>) {
+        try {
+            const jwt: string = req.cookies.refreshToken
+            if (!jwt) {
+                res.sendStatus(HTTP_STATUSES.TO_MANY_REQUESTS_429)
+                return
+            }
 
-        const userId= req.user._id
+            const deleteResult = await securityService.deleteAllNotActiveDevices(jwt)
+            if (!deleteResult.acknowledged) {
+                res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                return
+            }
 
+            res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+            return
+
+
+        } catch (e) {
+            console.log(e)
+            res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                .json(`Some server error:${e}`)
+        }
+
+
+    },
+    async terminateDevicesSessionById(req: Request<any>, res: Response<any>) {
+        try {
+
+            const deviceIdFromParams = req.params.deviceId
+
+            if (!deviceIdFromParams) {
+                res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json('Cant find id in params')
+                return
+            }
+
+            const token = req.cookies.refreshToken
+            if (!token) {
+                res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401)
+                return
+            }
+
+            const deleteResult = await securityService.terminateDevicesSessionById(token, deviceIdFromParams)
+            if (!deleteResult.acknowledged) {
+                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+                return
+            }
+
+        } catch (e) {
+            console.log(e)
+            res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json(`Some server error:${e}`)
+            return
+        }
     }
 
 }
 
 
-securityRouter.get('/devices',authRefreshTokenMiddleware, securityController.getAllActiveDevices)
-securityRouter.delete('/devices',authRefreshTokenMiddleware, securityController.getAllActiveDevices)
-securityRouter.delete('/devices/:deviceId',authRefreshTokenMiddleware, securityController.getAllActiveDevices)
+securityRouter.get('/devices', authRefreshTokenMiddleware, securityController.getAllActiveDevices)
+securityRouter.delete('/devices', authRefreshTokenMiddleware, securityController.deleteNotUseDevices)
+securityRouter.delete('/devices/:deviceId', authRefreshTokenMiddleware, securityController.terminateDevicesSessionById)

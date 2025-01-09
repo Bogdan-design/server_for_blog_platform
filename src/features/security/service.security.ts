@@ -24,6 +24,7 @@ export const securityService = {
         }
 
         const userId:string = payload.userId
+
         const deviceId:string = payload.deviceId
 
         const iat = new Date(payload.iat *1000).toISOString()

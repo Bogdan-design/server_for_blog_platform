@@ -37,14 +37,17 @@ export const jwtService = {
     async getDeviceIdByToken(token: string) {
         try {
             const secret = process.env.JWT_SECRET
-            const payload = jwt.verify(token, secret);
+            const payload = await jwt.verify(token, secret);
 
             if (typeof payload === 'string') {
                 throw new Error('payload is string')
 
             }
 
-            return new ObjectId((payload as JwtPayload & { deviceId: string }).deviceId)
+            const deviceId = payload.deviceId
+
+
+            return deviceId
 
         } catch (e) {
             console.log(e)

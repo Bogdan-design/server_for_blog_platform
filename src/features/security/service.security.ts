@@ -1,6 +1,5 @@
 import {securityRepository} from "../../features/security/repository.security";
 import {DeviceSessionDBType} from "../../types/types";
-import {v4 as uuidv4} from 'uuid'
 import jwt from "jsonwebtoken";
 import UAParser from "ua-parser-js";
 
@@ -11,7 +10,7 @@ export const securityService = {
         const allDevises = await securityRepository.findAllDevises(userId)
         return allDevises
     },
-    async securityRepository({titleForParsing, token,ip,baseUrl}: { titleForParsing: string, token: string,ip:string,baseUrl:string }) {
+    async securityRepository({titleForParsing, refreshToken,ip,baseUrl}: { titleForParsing: string, refreshToken: string,ip:string,baseUrl:string }) {
 
         const secret = process.env.JWT_SECRET
 
@@ -19,12 +18,13 @@ export const securityService = {
         parser.setUA(titleForParsing)
         const title = parser.getResult().ua
 
-        const payload = jwt.verify(token, secret)
+        const payload = jwt.verify(refreshToken, secret)
         if(typeof payload === 'string'){
             throw new Error('payload is string')
         }
 
-        const userId = payload.userId
+        const userId:string = payload.userId
+        const deviceId:string = payload.deviceId
 
         const iat = new Date(payload.iat *1000).toISOString()
 
@@ -34,13 +34,17 @@ export const securityService = {
         const newDevice: DeviceSessionDBType = {
             userId,
             title,
-            deviceId: uuidv4(),
+            deviceId,
             iat,
             exp,
             ip,
             baseUrl,
         }
         const res = await securityRepository.saveDeviseDataToDB(newDevice)
+        return res
+    },
+    async deleteAllNotActiveDevices (deviceId: string){
+        const res = await securityRepository.deleteAllDevices(deviceId)
         return res
     }
 

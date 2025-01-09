@@ -1,5 +1,6 @@
 import {DeviceSessionDBType, SessionType} from "../../types/types";
-import {devisesCollection, sessionCollection} from "../../db/mongo.db";
+import {devicesCollection, sessionCollection} from "../../db/mongo.db";
+import {ObjectId} from "mongodb";
 
 export const securityRepository = {
     async saveSession (data: SessionType){
@@ -18,11 +19,18 @@ export const securityRepository = {
         return result
     },
     async findAllDevises (userId:string){
-        const filter = userId ? {userId: {$regex: userId}} : {}
-        const devises = await sessionCollection.find(filter).toArray()
+        const filter = userId ? {userId: {$regex:userId}} : {}
+        const devises :DeviceSessionDBType[] = await devicesCollection.find(filter).toArray()
         return devises
     },
     async saveDeviseDataToDB (data:DeviceSessionDBType){
-        return devisesCollection.insertOne(data)
+        return devicesCollection.insertOne(data)
+    },
+    async deleteAllDevices (deviceId:string){
+        return devicesCollection.deleteMany(
+            {
+                $nor: [{ deviceId: {$regex: deviceId} }]
+            }
+        )
     }
 }

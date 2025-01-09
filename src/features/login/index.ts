@@ -17,6 +17,7 @@ import {WithId} from "mongodb";
 import {authService} from "../../features/login/authService";
 import {authRefreshTokenMiddleware} from "../../middlewares/authRefreshTokenMiddleware";
 import {securityService} from "../../features/security/service.security";
+import {repositoryTokens} from "../../application/repository.tokens";
 
 export const authRouter = Router()
 
@@ -33,6 +34,11 @@ export const authController = {
 
             const baseUrl = req.baseUrl
 
+            const oldToken = req.cookies.refreshToken
+            if(oldToken){
+                await repositoryTokens.saveRefreshTokenToBlackList(oldToken)
+            }
+
             const user = await serviceUsers.checkCredentials(loginOrEmail, password);
 
             if (!user) {
@@ -47,8 +53,9 @@ export const authController = {
                 return
             }
 
-            const {accessToken:token,refreshToken} = await jwtService.createJWT(user)
-            if (!token) {
+
+            const {accessToken,refreshToken} = await jwtService.createJWT(user)
+            if (!accessToken) {
                 res
                     .status(HTTP_STATUSES.UNAUTHORIZED_401)
                     .json({message: 'Some going wrong token'})
@@ -59,13 +66,13 @@ export const authController = {
                 return
             }
 
-            await securityService.securityRepository({titleForParsing,baseUrl,ip,token})
+            await securityService.securityRepository({titleForParsing,baseUrl,ip,refreshToken})
 
             res
                 .cookie('refreshToken', refreshToken, {httpOnly: true, secure: true,})
                 .status(HTTP_STATUSES.OK_200)
                 .json({
-                accessToken: token
+                accessToken
             })
             return
 

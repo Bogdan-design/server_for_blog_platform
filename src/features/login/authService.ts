@@ -36,7 +36,6 @@ export const authService = {
             date: new Date()
         }
 
-        const deviseId=uuidv4()
 
         const res = await securityRepository.saveSession(newSession)
         if(!res.acknowledged){

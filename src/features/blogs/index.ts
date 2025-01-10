@@ -58,7 +58,7 @@ export const blogsController = {
                 searchNameTerm
             )
             if (!blogsFromDB) {
-                res.status(404).json({'error': 'Blog not found'})
+                res.status(HTTP_STATUSES.NOT_FOUND_404).json({'error': 'Blog not found'})
                 return
             }
             res

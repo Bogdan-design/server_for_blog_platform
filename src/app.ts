@@ -23,7 +23,6 @@ app.get('/', (req, res) => {
 
 app.use(cookieParser())
 app.set('trust proxy', true)
-
 const sass = {
     secret: process.env.JWT_SECRET,
     resave: false,

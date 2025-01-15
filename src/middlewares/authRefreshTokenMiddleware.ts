@@ -4,12 +4,21 @@ import {jwtService} from "../application/jwt.service";
 import {repositoryUsers} from "../features/users/repository.users";
 import {ObjectId} from "mongodb";
 import {repositoryTokens} from "../application/repository.tokens";
+import {securityRepository} from "../features/security/repository.security";
 
 export const authRefreshTokenMiddleware = async (req: any, res: Response<any>, next: NextFunction) => {
 
     if (!req.cookies.refreshToken) {
         res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401)
         return
+    }
+    const deviceIdFromParams : string = req.params.deviceId
+    if (deviceIdFromParams) {
+        const device =  await securityRepository.findUserByDeviceId(deviceIdFromParams)
+        if(!device){
+            res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+            return
+        }
     }
 
     const token = req.cookies.refreshToken;

@@ -2,8 +2,9 @@ import {Request, Response, Router} from "express";
 import {authRefreshTokenMiddleware} from "../../middlewares/authRefreshTokenMiddleware";
 import {HTTP_STATUSES} from "../../status.code";
 import {securityService} from "../../features/security/service.security";
-import {DeviceSessionDBType} from "../../types/types";
+import {DeviceSessionDBType, RequestWithParams} from "../../types/types";
 import {ObjectId} from "mongodb";
+import {securityRepository} from "../../features/security/repository.security";
 
 export const securityRouter = Router()
 
@@ -66,13 +67,12 @@ export const securityController = {
 
 
     },
-    async terminateDevicesSessionById(req: Request<any>, res: Response<any>) {
+    async terminateDevicesSessionById(req: RequestWithParams<{ deviceId: string }>, res: Response<any>) {
         try {
 
             const deviceIdFromParams = req.params.deviceId
-
             if (!deviceIdFromParams) {
-                res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json('Cant find id in params')
+                res.status(HTTP_STATUSES.NOT_FOUND_404).json('Cant find id in params')
                 return
             }
 

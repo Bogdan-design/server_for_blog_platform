@@ -30,8 +30,7 @@ export const authController = {
             const {loginOrEmail, password} = req.body;
             const titleForParsing = req.headers['user-agent']
 
-            const ip = req.headers['Remote address']
-
+            const ip = req.ip
             const baseUrl = req.baseUrl
 
             const oldToken = req.cookies.refreshToken

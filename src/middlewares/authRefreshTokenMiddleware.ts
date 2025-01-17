@@ -4,7 +4,7 @@ import {jwtService} from "../application/jwt.service";
 import {repositoryUsers} from "../features/users/repository.users";
 import {ObjectId} from "mongodb";
 import {repositoryTokens} from "../application/repository.tokens";
-import {securityRepository} from "../features/security/repository.security";
+import {securityService} from "../features/security/service.security";
 
 export const authRefreshTokenMiddleware = async (req: any, res: Response<any>, next: NextFunction) => {
 
@@ -12,14 +12,14 @@ export const authRefreshTokenMiddleware = async (req: any, res: Response<any>, n
         res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401)
         return
     }
-    const deviceIdFromParams : string = req.params.deviceId
-    if (deviceIdFromParams) {
-        const device =  await securityRepository.findUserByDeviceId(deviceIdFromParams)
-        if(!device){
-            res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
-            return
-        }
-    }
+    // const deviceIdFromParams : string = req.params.deviceId
+    // if (deviceIdFromParams) {
+    //     const device =  await securityRepository.findUserByDeviceId(deviceIdFromParams)
+    //     if(!device){
+    //         res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+    //         return
+    //     }
+    // }
 
     const token = req.cookies.refreshToken;
 
@@ -29,13 +29,22 @@ export const authRefreshTokenMiddleware = async (req: any, res: Response<any>, n
         return
     }
 
-    await repositoryTokens.saveRefreshTokenToBlackList(token)
+    // await repositoryTokens.saveRefreshTokenToBlackList(token)
     const userId: ObjectId = await jwtService.getUserIdByToken(token);
     const deviceId: string = await jwtService.getDeviceIdByToken(token)
     if(!deviceId){
+        res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401)
+        return
+    }
+    const limit = await securityService.countSessionsForDevice(deviceId)
+    console.log(limit)
+    if(limit>=10){
         res.sendStatus(HTTP_STATUSES.TO_MANY_REQUESTS_429)
         return
     }
+
+
+
 
     if (userId) {
         req.user = await repositoryUsers.getUserById(userId.toString());

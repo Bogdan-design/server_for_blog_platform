@@ -4,7 +4,7 @@ import {
     blackListCollection,
     blogCollection,
     commentsCollection, devicesCollection,
-    postCollection, sessionCollection,
+    postCollection,
     usersCollection
 } from "../../db/mongo.db";
 
@@ -19,7 +19,6 @@ export const testingController = {
                 usersCollection.deleteMany(),
                 commentsCollection.deleteMany(),
                 blackListCollection.deleteMany(),
-                sessionCollection.deleteMany(),
                 devicesCollection.deleteMany()
             ])
 

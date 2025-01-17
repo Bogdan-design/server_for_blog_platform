@@ -12,7 +12,7 @@ export const securityService = {
         const allDevises = await securityRepository.findAllDevises(userId)
         return allDevises
     },
-    async securityRepository({titleForParsing, refreshToken, ip, baseUrl}: {
+    async createDeviceSession({titleForParsing, refreshToken, ip, baseUrl}: {
         titleForParsing: string,
         refreshToken: string,
         ip: string,
@@ -51,6 +51,13 @@ export const securityService = {
         const res = await securityRepository.saveDeviseDataToDB(newDevice)
         return res
     },
+    async countSessionsForDevice (deviceId:string){
+        const afterThatTime: Date = new Date(Date.now() - 10 * 1000)
+
+        const count = await securityRepository.countSessions(deviceId,afterThatTime)
+      return count
+    },
+
     async deleteAllNotActiveDevices(token: string) {
         const userId: ObjectId = await jwtService.getUserIdByToken(token)
         const deviceId: string = await jwtService.getDeviceIdByToken(token)

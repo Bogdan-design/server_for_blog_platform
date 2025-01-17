@@ -2,14 +2,15 @@ import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import {SETTINGS} from "./settings";
-import {blogsRouter} from "./features/blogs";
 import {testRouter} from "./features/testing/testing";
+import session from "express-session";
+import {authRouter} from "./features/login";
+import {blogsRouter} from "./features/blogs";
+import {commentsRouter} from "./features/comments";
 import {postsRouter} from "./features/posts";
 import {usersRouter} from "./features/users";
-import {authRouter} from "./features/login";
-import {commentsRouter} from "./features/comments";
 import {securityRouter} from "./features/security";
-import session from "express-session";
+
 
 export const app = express()
 

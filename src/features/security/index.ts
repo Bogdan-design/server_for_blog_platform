@@ -5,4 +5,4 @@ export const securityRouter = Router()
 
 securityRouter.get('/devices', authRefreshTokenMiddleware, securityController.getAllActiveDevices)
 securityRouter.delete('/devices', authRefreshTokenMiddleware, securityController.deleteNotUseDevices)
-securityRouter.delete('/devices/:deviceId', authRefreshTokenMiddleware, securityController.terminateDevicesSessionById)
+securityRouter.delete('/devices/:deviceId', authRefreshTokenMiddleware, securityController.deleteDevicesSessionById)

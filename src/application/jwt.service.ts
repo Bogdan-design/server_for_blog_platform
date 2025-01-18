@@ -4,9 +4,9 @@ import {ObjectId, WithId} from "mongodb";
 import {v4 as uuidv4} from "uuid";
 
 export const jwtService = {
-    async createJWT(user: WithId<UserTypeDB>, id?: string) {
+    async createJWT(user: WithId<UserTypeDB>, oldDeviceId?: string) {
 
-        const deviceId = id ? id : uuidv4()
+        const deviceId = oldDeviceId ? oldDeviceId : uuidv4()
 
         const accessToken = jwt.sign({userId: user._id.toString()}, process.env.JWT_SECRET, {expiresIn: process.env.JWT_EXPIRES});
 
@@ -14,6 +14,8 @@ export const jwtService = {
             userId: user._id.toString(),
             deviceId
         }, process.env.JWT_SECRET, {expiresIn: process.env.JWT_REFRESH_EXPIRES});
+
+
 
         return {accessToken, refreshToken}
     },
@@ -44,7 +46,7 @@ export const jwtService = {
 
             }
 
-            const deviceId = payload.deviceId
+            const deviceId  = payload.deviceId
 
 
             return deviceId
@@ -54,6 +56,15 @@ export const jwtService = {
             return null;
         }
 
+    },
+    async getTokenPayload (token:string) {
+        const secret = process.env.JWT_SECRET
+        const payload = jwt.verify(token, secret);
+        if (typeof payload === 'string') {
+            throw new Error('payload is string')
+
+        }
+        return payload as JwtPayload & { userId: string } & {deviceId:string}
     }
     // async slidingExpirationTime (){
     //

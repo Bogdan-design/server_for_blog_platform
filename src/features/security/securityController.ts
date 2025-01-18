@@ -1,8 +1,10 @@
 import {Request, Response} from "express";
 import {HTTP_STATUSES} from "../../status.code";
 import {securityService} from "../../features/security/service.security";
-import {DeviceSessionDBType, RequestWithParams} from "../../types/types";
-import {ObjectId} from "mongodb";
+import {DeviceSessionDBType, RequestWithParams, UserTypeDB} from "../../types/types";
+import {ObjectId, WithId} from "mongodb";
+import {securityRepository} from "./repository.security";
+import {repositoryTokens} from "../../application/repository.tokens";
 
 
 const getDevisesViewModel = (dbDevise: DeviceSessionDBType) => {
@@ -20,9 +22,9 @@ export const securityController = {
     async getAllActiveDevices(req: Request<any> & { user: { _id: ObjectId } }, res: Response<any>): Promise<void> {
 
         try {
-
             const userId = req.user._id.toString()
             const devises = await securityService.getAllActiveDevisesByUserId(userId)
+
 
             res
                 .status(HTTP_STATUSES.OK_200)
@@ -40,17 +42,23 @@ export const securityController = {
     },
     async deleteNotUseDevices(req: Request<any> & { user: { _id: ObjectId } }, res: Response<any>) {
         try {
-            const jwt: string = req.cookies.refreshToken
-            if (!jwt) {
+            const refreshToken: string = req.cookies.refreshToken
+            if (!refreshToken) {
                 res.sendStatus(HTTP_STATUSES.TO_MANY_REQUESTS_429)
                 return
             }
 
-            const deleteResult = await securityService.deleteAllNotActiveDevices(jwt)
+            const deleteResult = await securityService.deleteAllNotActiveDevices(refreshToken)
             if (!deleteResult.acknowledged) {
                 res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
                 return
             }
+            // const success =  await repositoryTokens.saveRefreshTokenToBlackList(refreshToken)
+            //
+            // if(!success.acknowledged){
+            //     res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
+            //     return
+            // }
 
             res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
             return
@@ -64,26 +72,45 @@ export const securityController = {
 
 
     },
-    async terminateDevicesSessionById(req: RequestWithParams<{ deviceId: string }>, res: Response<any>) {
+    async deleteDevicesSessionById(req: RequestWithParams<{ deviceId: string }> & {
+        user: WithId<UserTypeDB>
+    }, res: Response<any>) {
         try {
 
-            const deviceIdFromParams = req.params.deviceId
-            if (!deviceIdFromParams) {
+            const deviceId = req.params.deviceId
+            const userId = req.user._id.toString()
+            const token = req.cookies.refreshToken
+
+            if (!deviceId) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json('Cant find id in params')
                 return
             }
 
-            const token = req.cookies.refreshToken
+            const device = await securityRepository.findSessionByDeviceId(deviceId)
+            if (!device) {
+                res.status(HTTP_STATUSES.NOT_FOUND_404).json('Cant find device by id')
+                return
+            }
+
+            if (userId !== device.userId) {
+                res.status(HTTP_STATUSES.NOT_OWN_403).json('You not owner')
+                return
+            }
+
+
             if (!token) {
                 res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401)
                 return
             }
 
-            const deleteResult = await securityService.terminateDevicesSessionById(token, deviceIdFromParams)
+            const deleteResult = await securityService.deleteDevicesSessionById(token, deviceId)
             if (!deleteResult.acknowledged) {
                 res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
             }
+
+            res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+            return
 
         } catch (e) {
             console.log(e)

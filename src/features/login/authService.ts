@@ -25,8 +25,6 @@ export const authService = {
             return false
         }
         return true
-    },
-
-
+    }
 
 }

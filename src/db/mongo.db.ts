@@ -18,6 +18,7 @@ export const usersCollection: Collection<UserTypeDB> = db.collection<UserTypeDB>
 export const commentsCollection: Collection<CommentType> = db.collection<CommentType>(SETTINGS.COMMENTS_COLLECTION_NAME)
 export const blackListCollection: Collection<BlackListRefreshTokensType> = db.collection<BlackListRefreshTokensType>(SETTINGS.BLACK_LIST_REFRESH_TOKENS_NAME)
 export const devicesCollection: Collection<DeviceSessionDBType> = db.collection<DeviceSessionDBType>(SETTINGS.SECURITY)
+export const sessionCollection: Collection<SessionType> = db.collection<SessionType>(SETTINGS.SESSIONS)
 
 export const connectToDB = async () => {
     try {

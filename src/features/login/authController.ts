@@ -10,6 +10,7 @@ import {authService} from "../../features/login/authService";
 import {securityService} from "../../features/security/service.security";
 import {repositoryTokens} from "../../application/repository.tokens";
 import {AuthLoginModel} from "../../features/login/models/AuthLoginModel";
+import {securityRepository} from "../../features/security/repository.security";
 
 
 
@@ -80,26 +81,37 @@ export const authController = {
         }
 
     },
-    async refresh(req: Request & {user: WithId<UserTypeDB> }, res: Response<any>) : Promise<void> {
+    async refresh(req: Request & {user: WithId<UserTypeDB>, deviceId: string }, res: Response<any>) : Promise<void> {
 
         try{
             const user:  WithId<UserTypeDB> = req.user
+            const oldToken: string = req.cookies.refreshToken
+            const oldDeviceId = req.deviceId
 
             if (!user) {
                 res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
                 return
             }
 
-            const token = await jwtService.createJWT(user)
+            const {accessToken, refreshToken} = await jwtService.createJWT(user,oldDeviceId)
 
-            if (!token) {
+            if (!refreshToken) {
                 res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
                 return
             }
+
+            const success =  await repositoryTokens.saveRefreshTokenToBlackList(oldToken)
+
+            if(!success.acknowledged){
+                res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
+                return
+            }
+
+            await securityService.updateSessionTime(refreshToken)
             res
-                .cookie('refreshToken', token.refreshToken, {httpOnly: true, secure: true,})
+                .cookie('refreshToken',refreshToken, {httpOnly: true, secure: true,})
                 .status(HTTP_STATUSES.OK_200)
-                .json({accessToken: token.accessToken})
+                .json({accessToken: accessToken})
             return
 
         }catch (e){
@@ -140,6 +152,7 @@ export const authController = {
     },
     async registration(req: RequestWithBody<CreateUserModel>, res: Response<any>) {
         try {
+
             const {email, login} = await serviceUsers.createUser({
                 login: req.body.login,
                 email: req.body.email,
@@ -247,13 +260,21 @@ export const authController = {
             return
         }
     },
-    async logout(req: any, res: Response<any>) {
+    async logout(req: Request<any> &{deviceId:string}, res: Response<any>) {
         try{
+
+
+            const deviceId = req.deviceId
+
+            const deletedDevice = await securityRepository.deleteAllSessionsByDeviceId(deviceId)
+            if(!deletedDevice.acknowledged){
+                res.status(HTTP_STATUSES.UNAUTHORIZED_401).send('Unauthorized');
+                return
+            }
 
             res
                 .clearCookie('refreshToken')
-                .status(HTTP_STATUSES.NO_CONTENT_204)
-                .send('Logout')
+                .sendStatus(HTTP_STATUSES.NO_CONTENT_204)
             return
         } catch (e) {
             res

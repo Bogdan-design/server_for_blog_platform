@@ -22,4 +22,5 @@ export const SETTINGS = {
     COMMENTS_COLLECTION_NAME:'comments',
     BLACK_LIST_REFRESH_TOKENS_NAME:'blackListRefreshTokens',
     SECURITY:'security',
+    SESSIONS:'sessions',
 }

@@ -40,7 +40,7 @@ export type UserType = {
 export type SessionType ={
     ip:string | string []
     url:string
-    date:string
+    date:Date
 }
 
 export type DeviceSessionDBType ={

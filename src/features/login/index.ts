@@ -11,7 +11,7 @@ import {authController} from "./authController";
 import {sessionMiddleware} from "../../middlewares/sessionMiddleware";
 export const authRouter = Router()
 
-authRouter.post('/login',sessionMiddleware,authInputValidationBodyMiddleware, authController.login)
+authRouter.post('/login',authInputValidationBodyMiddleware,sessionMiddleware, authController.login)
 authRouter.post('/refresh-token',authRefreshTokenMiddleware,authController.refresh)
 authRouter.post('/registration-confirmation',sessionMiddleware, confirmationInputValidationBodyMiddleware, authController.confirmation)
 authRouter.post('/registration',sessionMiddleware,registrationInputValidationBodyMiddleware, authController.registration)

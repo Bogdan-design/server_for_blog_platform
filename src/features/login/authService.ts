@@ -20,7 +20,10 @@ export const authService = {
             const newCode = uuidv4()
             await repositoryUsers.updateUserConfirmationCode(user._id.toString(), newCode)
             const userWithNewConfirmationCode = await repositoryUsers.findByLoginOrEmail(email)
-            await emailsManager.sendEmailConfirmationMessage(userWithNewConfirmationCode)
+            emailsManager.sendEmailConfirmationMessage(userWithNewConfirmationCode).catch(e=>{
+                console.log(e)
+                throw new Error('Cant send mail')
+            })
         } catch (e) {
             return false
         }

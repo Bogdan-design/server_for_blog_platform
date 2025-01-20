@@ -1,5 +1,5 @@
 import {InsertOneResult, ObjectId, SortDirection} from "mongodb";
-import {blogCollection} from "../../db/mongo.db";
+import {BlogModel} from "../../db/mongo.db";
 import {BlogType} from "../../types/types";
 import {UpdateBlogModel} from "../../features/blogs/models/UpdateBlogModel";
 
@@ -16,12 +16,11 @@ export const blogsRepository = {
         if (searchNameTerm !== null) {
             filter.name = {$regex: searchNameTerm, $options: 'i'};
         }
-        return await blogCollection
+        return BlogModel
             .find(filter)
             .sort({[sortBy]: sortDirection === 'asc' ? 'asc' : -1})
             .skip((pageNumber - 1) * pageSize)
-            .limit(pageSize)
-            .toArray()
+            .limit(pageSize).lean()
     },
     async getBlogsCount  (searchNameTerm: string){
         const filter: any = {};
@@ -29,23 +28,22 @@ export const blogsRepository = {
             filter.name = {$regex: searchNameTerm, $options: "i"};
         }
 
-        return await blogCollection
-            .countDocuments(filter)
+        return BlogModel.countDocuments(filter)
     },
     async createBlog  (newBlogModel:BlogType)  {
-        return await blogCollection.insertOne(newBlogModel)
+        return  BlogModel.insertMany([newBlogModel])
     },
     async findOneBlog (result:InsertOneResult<BlogType>)  {
-        return await blogCollection.findOne({_id: result.insertedId})
+        return BlogModel.findOne({_id: result.insertedId})
     },
     async findBlogById  (blogId:string) {
-        return await blogCollection.findOne({_id: new ObjectId(blogId)})
+        return BlogModel.findOne({_id: new ObjectId(blogId)})
     },
     async updateBlog (blogId:string,newBody:UpdateBlogModel)  {
-        return await blogCollection.updateOne({_id: new ObjectId(blogId)}, {$set: {...newBody}});
+        return BlogModel.updateOne({_id: new ObjectId(blogId)}, {$set: {...newBody}});
     },
     async deleteBlog (blogId:string) {
-        return await blogCollection.deleteOne({_id: new ObjectId(blogId)});
+        return BlogModel.deleteOne({_id: new ObjectId(blogId)});
     }
 
 }

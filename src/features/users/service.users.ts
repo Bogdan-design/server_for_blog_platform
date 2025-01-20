@@ -58,7 +58,10 @@ export const serviceUsers = {
 
             newUserFromDB = await repositoryUsers.getUserById(result.insertedId.toString())
             try {
-                await emailsManager.sendEmailConfirmationMessage(newUserFromDB)
+                emailsManager.sendEmailConfirmationMessage(newUserFromDB).catch(e=>{
+                    console.log(e)
+                    throw new Error('Mail not send')
+                })
 
             } catch (e) {
                 console.log(e)

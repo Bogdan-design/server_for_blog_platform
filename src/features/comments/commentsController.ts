@@ -2,12 +2,42 @@ import {Response, Router} from "express";
 import {HTTP_STATUSES} from "../../status.code";
 import {serviceComments} from "../../features/comments/service.comments";
 import {repositoryComments} from "../../features/comments/repository.comments";
-import {CommentType, RequestWithParams, RequestWithParamsAndBody, UserType} from "../../types/types";
+import {CommentLikeStatus, CommentType, RequestWithParams, RequestWithParamsAndBody, UserType} from "../../types/types";
 import {ObjectId, WithId} from "mongodb";
 
 
 
 export const commentsController = {
+    async likeStatus(req:RequestWithParamsAndBody<{commentId: string},{likeStatus:CommentLikeStatus}>, res:Response<any>){
+        try {
+            const commentId = req.params.commentId
+            const likeStatus = req.body.likeStatus
+
+            const comment = await repositoryComments.getCommentsById(commentId)
+
+            if(!comment){
+                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+                return
+            }
+
+            const result = await serviceComments.likeStatus({commentId, userId: comment.commentatorInfo.userId, likeStatus})
+
+            if(!result.acknowledged){
+                res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                return
+            }
+
+            res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+            return
+        }catch (e) {
+            console.error(e);
+            res
+                .status(HTTP_STATUSES.BAD_REQUEST_400)
+                .json({error: "Error updating comments"});
+            return
+        }
+
+    },
     async updateComment(req: RequestWithParamsAndBody<{ commentId: string }, {
         content: string
     }> & {
@@ -122,7 +152,12 @@ export const commentsController = {
                     userId: comment.commentatorInfo.userId,
                     userLogin: comment.commentatorInfo.userLogin
                 },
-                createdAt: comment.createdAt
+                createdAt: comment.createdAt,
+                likesInfo: {
+                    likesCount: comment.likesInfo.likesCount,
+                    dislikesCount: comment.likesInfo.dislikesCount,
+                    myStatus: comment.likesInfo.myStatus
+                }
             })
 
         } catch (err) {

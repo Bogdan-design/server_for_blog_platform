@@ -39,6 +39,16 @@ export const repositoryComments = {
     async getCommentsCountByPostId (postId: string) {
         const filter: any = postId ? {postId: {$regex: postId}} : {}
         return await commentsCollection.countDocuments(filter)
+    },
+    async updateLikeStatusForComment({commentId, userId, likeStatus}: { commentId: string, userId: string, likeStatus: string }) {
+        const result = await commentsCollection.updateOne({_id: new ObjectId(commentId)}, {
+            $set: {
+                "likeInfo.likesCount": likeStatus === 'like' ? 1 : 0,
+                "likeInfo.dislikesCount": likeStatus === 'dislike' ? 1 : 0,
+                "likeInfo.myStatus": likeStatus
+            }
+        })
+        return result
     }
 
 }

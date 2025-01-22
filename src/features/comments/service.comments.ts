@@ -1,4 +1,5 @@
 import {repositoryComments} from "../../features/comments/repository.comments";
+import {CommentLikeStatus} from "../../types/types";
 
 export const serviceComments = {
     updateComment: async ({id,newContent}:{id:string,newContent:string}) => {
@@ -41,5 +42,10 @@ export const serviceComments = {
                 createdAt:comment.createdAt,
             }))
         }
-    }
+    },
+    async likeStatus({commentId, userId, likeStatus}: { commentId: string, userId: string, likeStatus: CommentLikeStatus }) {
+
+        const result = await repositoryComments.updateLikeStatusForComment({commentId, userId, likeStatus})
+        return result
+    },
 }

@@ -63,6 +63,13 @@ export type UserTypeDB= {
         isConfirmed: boolean
     }
 }
+
+export type RecoveryPasswordCodeModelType ={
+    email:string
+    userId:string
+    recoveryCode:string
+    expirationDate:Date
+}
 export type RegistrationType = {
     login: string
     email: string
@@ -71,6 +78,12 @@ export type RegistrationType = {
 
 export type BlackListRefreshTokensType = {
     refreshToken: string
+}
+
+export type LikeInfoType = {
+    likesCount: number
+    dislikesCount: number
+    myStatus: CommentLikeStatus
 }
 
 export type CommentType = {
@@ -82,6 +95,7 @@ export type CommentType = {
         userLogin:string
     }
     createdAt: string
+    likesInfo: LikeInfoType
 }
 
 type ErrorMessage = {
@@ -99,3 +113,9 @@ export type RequestWithParams<T> = Request<T>
 export type RequestWithParamsAndBody<T, B> = Request<T, {}, B>
 export type RequestWithParamsAndQuery<T, B> = Request<T, {}, {},B>
 
+
+export enum CommentLikeStatus {
+    like = 'like',
+    dislike = 'dislike',
+    None = 'None'
+}

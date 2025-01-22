@@ -1,45 +1,44 @@
 import {body, FieldValidationError, param, validationResult} from "express-validator";
 import {NextFunction, Request, Response} from "express";
 import {HTTP_STATUSES} from "../status.code";
-import {blogCollection} from "../db/mongo.db";
 import {ObjectId} from "mongodb";
-import {repositoryPosts} from "../features/posts/repository.posts";
+import {BlogModel, PasswordRecoveryModel} from "../db/mongo.db";
 
 export const idValidation = param("id").notEmpty().isString()
-export const blogIdParamsValidation = param("blogId").notEmpty().isString().custom(
-    async (blogId: string) => {
-
-        const res = await blogCollection.findOne({_id: new ObjectId(blogId)})
-        if (!res) {
-            throw new Error("blogId not found")
-        }
-        return true
-    }).withMessage("Wrong blogId")
-
-export const postIdParamValidation = param('postId').trim().notEmpty().custom(
-    async (postId: string) => {
-        const res = await repositoryPosts.findPostByPostId(postId)
-        if (!res) {
-            throw new Error("blogId not found")
-        }
-        return true
-    }
-)
-
-export const commentIdParamValidation = param('commentId').trim().notEmpty().custom(
-    async (commentId: string) => {
-        const res = await blogCollection.findOne({_id: new ObjectId(commentId)})
-        if (!res) {
-            throw new Error("commentId not found")
-        }
-        return true
-    }
-)
+// export const blogIdParamsValidation = param("blogId").notEmpty().isString().custom(
+//     async (blogId: string) => {
+//
+//         const res = await BlogModel.findOne({_id: new ObjectId(blogId)})
+//         if (!res) {
+//             throw new Error("blogId not found")
+//         }
+//         return true
+//     }).withMessage("Wrong blogId")
+//
+// export const postIdParamValidation = param('postId').trim().notEmpty().custom(
+//     async (postId: string) => {
+//         const res = await repositoryPosts.findPostByPostId(postId)
+//         if (!res) {
+//             throw new Error("blogId not found")
+//         }
+//         return true
+//     }
+// )
+//
+// export const commentIdParamValidation = param('commentId').trim().notEmpty().custom(
+//     async (commentId: string) => {
+//         const res = await blogCollection.findOne({_id: new ObjectId(commentId)})
+//         if (!res) {
+//             throw new Error("commentId not found")
+//         }
+//         return true
+//     }
+// )
 
 export const blogIdValidation = body("blogId").notEmpty().isString().custom(
     async (blogId: string) => {
 
-        const res = await blogCollection.findOne({_id: new ObjectId(blogId)})
+        const res = await BlogModel.findOne({_id: new ObjectId(blogId)})
         if (!res) {
             throw new Error("blogId not found")
         }
@@ -95,6 +94,23 @@ export const authInputValidationBodyMiddleware = [
     errorsMiddleware
 ]
 
+export const newPasswordInputValidationBodyMiddleware = [
+    body('newPassword').trim().notEmpty().isLength({min: 6, max: 20}),
+    body("recoveryCode").trim().notEmpty().isString().custom(async (recoveryCode: string) => {
+        const res = await PasswordRecoveryModel.findOne({recoveryCode})
+        if (!res) {
+            throw new Error("recoveryCode is not correct")
+        }
+        return true
+    }),
+    errorsMiddleware
+]
+
+export const recoveryPasswordInputValidationBodyMiddleware = [
+    body('email').trim().notEmpty().isString().isEmail(),
+    errorsMiddleware
+]
+
 export const postInputValidationCommentBodyValidationMiddleware = [
     body('content').trim().notEmpty().isString().isLength({min: 20, max: 300}),
     errorsMiddleware
@@ -108,7 +124,7 @@ export const commentsInputValidationParamsMiddleware = [
 export const confirmationInputValidationBodyMiddleware = [
     body('code').trim().trim().notEmpty().isString().custom(
         async (code: string) => {
-            const res = await blogCollection.findOne({_id: new ObjectId(code)})
+            const res = await BlogModel.findOne({_id: new ObjectId(code)})
             if (!res) {
                 throw new Error("code is not correct")
             }

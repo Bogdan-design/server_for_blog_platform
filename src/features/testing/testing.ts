@@ -2,8 +2,8 @@ import express from "express";
 import {HTTP_STATUSES} from "../../status.code";
 import {
     blackListCollection,
-    blogCollection,
-    commentsCollection, devicesCollection,
+    BlogModel,
+    commentsCollection, devicesCollection, PasswordRecoveryModel,
     postCollection,
     usersCollection
 } from "../../db/mongo.db";
@@ -11,10 +11,11 @@ import {
 export const testRouter = express.Router()
 
 export const testingController = {
-    async deleteAllData  (req: any, res:any){
-        try{
+    async deleteAllData(req: any, res: any) {
+        try {
             await Promise.all([
-                blogCollection.deleteMany(),
+                PasswordRecoveryModel.deleteMany(),
+                BlogModel.deleteMany(),
                 postCollection.deleteMany(),
                 usersCollection.deleteMany(),
                 commentsCollection.deleteMany(),
@@ -25,7 +26,7 @@ export const testingController = {
             res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
             return
 
-        } catch(err){
+        } catch (err) {
             console.log(err)
             res.sendStatus(HTTP_STATUSES.BAD_REQUEST_400)
             return

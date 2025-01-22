@@ -1,7 +1,7 @@
-import {usersCollection} from "../../db/mongo.db";
+import {PasswordRecoveryModel, usersCollection} from "../../db/mongo.db";
 import {QueryModel} from "../../helpers/paginationQuereis";
 import {ObjectId, WithId} from "mongodb";
-import {UserTypeDB} from "../../types/types";
+import {RecoveryPasswordCodeModelType, UserTypeDB} from "../../types/types";
 
 export const repositoryUsers = {
     getUsers: async ({pageSize, sortBy, pageNumber, sortDirection, searchLoginTerm, searchEmailTerm}: QueryModel) => {
@@ -84,4 +84,14 @@ export const repositoryUsers = {
         const result = await usersCollection.updateOne({_id: new ObjectId(id)}, {$set: {'emailConfirmation.confirmationCode': code}})
         return result.modifiedCount === 1
     },
+    async createRecoveryCode(recoveryCodeModel: RecoveryPasswordCodeModelType) {
+        return await PasswordRecoveryModel.insertMany([recoveryCodeModel])
+    },
+    async findRecoveryCodeDB(code: string) {
+        return PasswordRecoveryModel.findOne({recoveryCode: code})
+    },
+    async updatePassword(userId: string, newPassword: string,passwordSalt:string) {
+        return await usersCollection.updateOne({_id: new ObjectId(userId)}, {$set: {'accountData.passwordHash': newPassword,'accountData.passwordSalt':passwordSalt}})
+    }
+
 }

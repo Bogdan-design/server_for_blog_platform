@@ -27,15 +27,14 @@ export const blogsRepository = {
         if (searchNameTerm !== null) {
             filter.name = {$regex: searchNameTerm, $options: "i"};
         }
-
         return BlogModel.countDocuments(filter)
     },
     async createBlog  (newBlogModel:BlogType)  {
         return  BlogModel.insertMany([newBlogModel])
     },
-    async findOneBlog (result:InsertOneResult<BlogType>)  {
-        return BlogModel.findOne({_id: result.insertedId})
-    },
+    // async findOneBlog (result:InsertOneResult<BlogType>)  {
+    //     return BlogModel.findOne({_id: result.insertedId})
+    // },
     async findBlogById  (blogId:string) {
         return BlogModel.findOne({_id: new ObjectId(blogId)})
     },

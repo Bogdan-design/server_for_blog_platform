@@ -1,6 +1,8 @@
 import {
     authInputValidationBodyMiddleware,
     confirmationInputValidationBodyMiddleware,
+    newPasswordInputValidationBodyMiddleware,
+    recoveryPasswordInputValidationBodyMiddleware,
     registrationInputValidationBodyMiddleware,
     resendingEmailValidationBodyMiddleware
 } from "../../middlewares/errorsMiddleware";
@@ -12,6 +14,8 @@ import {sessionMiddleware} from "../../middlewares/sessionMiddleware";
 export const authRouter = Router()
 
 authRouter.post('/login',authInputValidationBodyMiddleware,sessionMiddleware, authController.login)
+authRouter.post('/password-recovery',sessionMiddleware,recoveryPasswordInputValidationBodyMiddleware, authController.passwordRecovery)
+authRouter.post('/new-password',sessionMiddleware,newPasswordInputValidationBodyMiddleware, authController.newPassword)
 authRouter.post('/refresh-token',authRefreshTokenMiddleware,authController.refresh)
 authRouter.post('/registration-confirmation',sessionMiddleware, confirmationInputValidationBodyMiddleware, authController.confirmation)
 authRouter.post('/registration',sessionMiddleware,registrationInputValidationBodyMiddleware, authController.registration)

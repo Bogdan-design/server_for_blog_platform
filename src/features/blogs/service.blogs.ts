@@ -36,11 +36,9 @@ export const serviceBlogs = {
     },
     async createBlog (newBlogModel: BlogType) {
 
-        const result = await blogsRepository.createBlog(newBlogModel)
+        const newBlog = await blogsRepository.createBlog(newBlogModel)
 
-        const newBlog = await blogsRepository.findOneBlog(result)
-
-        return {result, newBlog}
+        return newBlog
     },
     async findBlog  (blogId: string) {
         return await blogsRepository.findBlogById(blogId)

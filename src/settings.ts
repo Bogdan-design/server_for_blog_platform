@@ -23,4 +23,5 @@ export const SETTINGS = {
     BLACK_LIST_REFRESH_TOKENS_NAME:'blackListRefreshTokens',
     SECURITY:'security',
     SESSIONS:'sessions',
+    RECOVERY_PASSWORD:'recovery_password',
 }

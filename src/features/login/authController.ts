@@ -81,6 +81,47 @@ export const authController = {
         }
 
     },
+    async passwordRecovery(req: RequestWithBody<{email: string}>, res: Response<any>) {
+        const email = req.body.email
+        try{
+            const user = await repositoryUsers.findByLoginOrEmail(email)
+            if(!user){
+                res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+                return
+            }
+            const recoveryCode = await serviceUsers.createRecoveryCode(user,email)
+
+
+            if(!recoveryCode){
+                res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                return
+            }
+            res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+            return
+
+        }catch (e){
+            console.log(e)
+            res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+            return
+        }
+    },
+    async newPassword (req: RequestWithBody<{recoveryCode: string, newPassword: string}>, res: Response<any>) {
+        const code = req.body.recoveryCode
+        const password = req.body.newPassword
+        try{
+            const user = await serviceUsers.changePasswordByRecoveryCode(code,password)
+            if(!user){
+                res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+                return
+            }
+            res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+            return
+        }catch (e){
+            console.log(e)
+            res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+            return
+        }
+    },
     async refresh(req: Request & {user: WithId<UserTypeDB>, deviceId: string }, res: Response<any>) : Promise<void> {
 
         try{

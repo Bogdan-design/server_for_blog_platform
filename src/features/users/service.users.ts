@@ -1,12 +1,13 @@
 import {repositoryUsers} from "../../features/users/repository.users";
 import {InsertOneResult, WithId} from "mongodb";
 import {QueryModel} from "../../helpers/paginationQuereis";
-import {UserTypeDB} from "../../types/types";
+import {RecoveryPasswordCodeModelType, UserTypeDB} from "../../types/types";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import bcrypt from "bcrypt";
 import {v4 as uuidv4} from 'uuid';
 import {add} from "date-fns";
 import {emailsManager} from "../../managers/email.manager";
+
 
 export const serviceUsers = {
     async getUsers(
@@ -24,7 +25,7 @@ export const serviceUsers = {
             users
         }
     },
-    async createUser({login, password, email,confirmed}: CreateUserModel) {
+    async createUser({login, password, email, confirmed}: CreateUserModel) {
 
         const passwordSalt = await bcrypt.genSalt()
         const passwordHash = await this._generateHash(password, passwordSalt)
@@ -58,7 +59,7 @@ export const serviceUsers = {
 
             newUserFromDB = await repositoryUsers.getUserById(result.insertedId.toString())
             try {
-                emailsManager.sendEmailConfirmationMessage(newUserFromDB).catch(e=>{
+                emailsManager.sendEmailConfirmationMessage(newUserFromDB).catch(e => {
                     console.log(e)
                     throw new Error('Mail not send')
                 })
@@ -90,7 +91,7 @@ export const serviceUsers = {
         const user = await repositoryUsers.findByLoginOrEmail(loginOrEmail)
         if (!user) return false
 
-        if(!user.emailConfirmation.isConfirmed) return false
+        if (!user.emailConfirmation.isConfirmed) return false
 
         const passwordHash = await this._generateHash(password, user.accountData.passwordSalt)
         if (user.accountData.passwordHash === passwordHash) {
@@ -98,6 +99,39 @@ export const serviceUsers = {
         } else {
             return false
         }
+    },
+    async createRecoveryCode(user: WithId<UserTypeDB>,email:string) {
+
+        const recoveryCodeDBModel: RecoveryPasswordCodeModelType = {
+            email,
+            userId: user._id.toString(),
+            recoveryCode: uuidv4(),
+            expirationDate: add(new Date(), {minutes: 10})
+        } // create recovery code
+
+        await repositoryUsers.createRecoveryCode(recoveryCodeDBModel) // save recovery code to db
+
+
+        emailsManager.sendPasswordRecoveryMessage(email, recoveryCodeDBModel.recoveryCode).catch(e => {
+            console.log(e)
+            throw new Error('Cant send mail')
+        })
+        return true
+    },
+    async changePasswordByRecoveryCode(code: string, newPassword: string) {
+        const codeModelDB = await repositoryUsers.findRecoveryCodeDB(code)
+        if (!codeModelDB) return false
+        if (codeModelDB.expirationDate < new Date()) return false
+        const user = await repositoryUsers.findByLoginOrEmail(codeModelDB.email)
+        if (!user) return false
+
+        const passwordSalt = await bcrypt.genSalt()
+        const passwordHash = await this._generateHash(newPassword, passwordSalt)
+        const res = await repositoryUsers.updatePassword(user._id.toString(), passwordHash, passwordSalt)
+
+
+        return res.modifiedCount === 1
     }
+
 
 }

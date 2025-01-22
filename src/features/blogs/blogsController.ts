@@ -18,7 +18,7 @@ import {servicePosts} from "../../features/posts/service.posts";
 import {getPostViewModel} from "../../features/posts/postsController";
 
 
-const getBlogViewModel = (dbBlog: WithId<BlogType>): BlogType => {
+const getBlogViewModel = (dbBlog: WithId<BlogType&{__v:number}>): BlogType => {
     return {
         id: dbBlog._id.toString(),
         name: dbBlog.name,
@@ -88,13 +88,8 @@ export const blogsController = {
             }
 
 
-            const {result, newBlog} = await serviceBlogs.createBlog(newBlogModel)
+            const newBlog = await serviceBlogs.createBlog(newBlogModel)
 
-            if (!result.insertedId) {
-                res
-                    .sendStatus(HTTP_STATUSES.NOT_FOUND_404)
-                return
-            }
             if (!newBlog) {
                 res
                     .sendStatus(HTTP_STATUSES.NOT_FOUND_404)
@@ -103,7 +98,7 @@ export const blogsController = {
 
             res
                 .status(HTTP_STATUSES.CREATED_201)
-                .json(getBlogViewModel(newBlog));
+                .json(getBlogViewModel(newBlog[0]));
             return
 
         } catch (e) {

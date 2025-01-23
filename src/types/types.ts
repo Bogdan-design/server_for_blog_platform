@@ -17,7 +17,6 @@ export type BlogType = {
 }
 
 
-
 export type PostType = {
     id?: string;
     title: string;
@@ -37,25 +36,36 @@ export type UserType = {
     createdAt: string,
 }
 
-export type SessionType ={
-    ip:string | string []
-    url:string
-    date:Date
+export type SessionType = {
+    ip: string | string []
+    url: string
+    date: Date
 }
 
-export type DeviceSessionDBType ={
-    userId:string
-    deviceId?:string
-    title:string
-    exp:string
-    iat:string
-    ip:string
-    baseUrl:string
+export type DeviceSessionDBType = {
+    userId: string
+    deviceId?: string
+    title: string
+    exp: string
+    iat: string
+    ip: string
+    baseUrl: string
+}
+
+export class UserDBType {
+    constructor(public accountData: UserType,
+                public emailConfirmation: {
+                    confirmationCode: string
+                    expirationDate: Date
+                    isConfirmed: boolean
+                }) {
+
+    }
+
 }
 
 
-
-export type UserTypeDB= {
+export type UserTypeDB = {
     accountData: UserType
     emailConfirmation: {
         confirmationCode: string
@@ -64,11 +74,11 @@ export type UserTypeDB= {
     }
 }
 
-export type RecoveryPasswordCodeModelType ={
-    email:string
-    userId:string
-    recoveryCode:string
-    expirationDate:Date
+export type RecoveryPasswordCodeModelType = {
+    email: string
+    userId: string
+    recoveryCode: string
+    expirationDate: Date
 }
 export type RegistrationType = {
     login: string
@@ -91,8 +101,8 @@ export type CommentType = {
     postId: string
     content: string
     commentatorInfo: {
-        userId:string
-        userLogin:string
+        userId: string
+        userLogin: string
     }
     createdAt: string
     likesInfo: LikeInfoType
@@ -111,7 +121,7 @@ export type RequestWithBody<T> = Request<{}, {}, T>
 export type RequestWithQuery<T> = Request<{}, {}, {}, T>
 export type RequestWithParams<T> = Request<T>
 export type RequestWithParamsAndBody<T, B> = Request<T, {}, B>
-export type RequestWithParamsAndQuery<T, B> = Request<T, {}, {},B>
+export type RequestWithParamsAndQuery<T, B> = Request<T, {}, {}, B>
 
 
 export enum CommentLikeStatus {

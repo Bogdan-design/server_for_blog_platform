@@ -1,6 +1,6 @@
 import {Request, Response, Router} from "express";
 import {RequestWithBody, UserTypeDB} from "../../types/types";
-import {serviceUsers} from "../../features/users/service.users";
+import {serviceUsers} from "src/features/users/usersService";
 import {HTTP_STATUSES} from "../../status.code";
 import {jwtService} from "../../application/jwt.service";
 import {repositoryUsers} from "../../features/users/repository.users";

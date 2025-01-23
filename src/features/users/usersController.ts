@@ -1,4 +1,4 @@
-import {Response, Router} from "express";
+import {Response} from "express";
 import {HTTP_STATUSES} from "../../status.code";
 import {paginationQueries, QueryModel} from "../../helpers/paginationQuereis";
 import {
@@ -6,16 +6,13 @@ import {
     ObjectModelFromDB,
     RequestWithBody,
     RequestWithParams,
-    RequestWithQuery,
-    UserType, UserTypeDB
+    UserType,
+    UserTypeDB
 } from "../../types/types";
-import {serviceUsers} from "../../features/users/service.users";
+import {serviceUsers, UsersService} from "../../features/users/usersService";
 import {WithId} from "mongodb";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
-import {authMiddleware} from "../../middlewares/authMiddleware";
 import {UserId} from "../../features/users/models/URIParamsUserIdModel";
-import {idValidation, userInputValidationBodyMiddleware} from "../../middlewares/errorsMiddleware";
-
 
 
 const getUsersViewModel = (dbUser: WithId<UserTypeDB>): UserType => {
@@ -27,9 +24,17 @@ const getUsersViewModel = (dbUser: WithId<UserTypeDB>): UserType => {
     }
 }
 
+export class UsersController {
 
-export const usersController = {
-    async getUsers(req: any , res:Response<ObjectModelFromDB<UserType> | { error: string }>):Promise<void>{
+    usersService: UsersService
+
+    constructor(){
+        this.usersService = new UsersService()
+    }
+
+
+
+    async getUsers(req: any, res: Response<ObjectModelFromDB<UserType> | { error: string }>): Promise<void> {
         // RequestWithQuery<QueryModel>
         try {
             const query = req.query
@@ -63,20 +68,21 @@ export const usersController = {
                 .json({error: 'Not Found'})
             return
         }
-    },
-    createUser: async (req:RequestWithBody<CreateUserModel>,
-                       res: Response<UserType | {error: string} | ExpectedErrorObjectType>) => {
-        try{
+    }
+
+    async createUser(req: RequestWithBody<CreateUserModel>,
+                     res: Response<UserType | { error: string } | ExpectedErrorObjectType>) {
+        try {
 
 
-            const {login,newUserFromDB,email,result} = await serviceUsers.createUser({
-                login:req.body.login,
-                password:req.body.password,
-                email:req.body.email,
-                confirmed:true
+            const {login, newUserFromDB, email, result} = await serviceUsers.createUser({
+                login: req.body.login,
+                password: req.body.password,
+                email: req.body.email,
+                confirmed: true
             });
 
-            if(login) {
+            if (login) {
                 res
                     .status(HTTP_STATUSES.UNAUTHORIZED_401)
                     .json({
@@ -90,13 +96,13 @@ export const usersController = {
                 return
             }
 
-            if(email) {
+            if (email) {
                 res
                     .status(HTTP_STATUSES.UNAUTHORIZED_401)
                     .json({
                         errorsMessages: [
                             {
-                                field: 'email', 
+                                field: 'email',
                                 message: 'email should be unique'
                             }
                         ]
@@ -122,16 +128,17 @@ export const usersController = {
                 .json(getUsersViewModel(newUserFromDB))
             return
 
-        }catch(e){
+        } catch (e) {
             res
                 .status(HTTP_STATUSES.NOT_FOUND_404)
-                .json({error:"Not Found"})
+                .json({error: "Not Found"})
             return
         }
-    },
-    deleteUser: async (req: RequestWithParams<UserId>&{}, res: Response<{error:string}>) => {
-        try{
-            if(!req.params.id){
+    }
+
+    async deleteUser(req: RequestWithParams<UserId> & {}, res: Response<{ error: string }>) {
+        try {
+            if (!req.params.id) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
                     .json({error: "Not Found"})
@@ -140,21 +147,21 @@ export const usersController = {
 
             const resDelete = await serviceUsers.deleteUserById(req.params.id)
 
-            if(resDelete.deletedCount ===0){
+            if (resDelete.deletedCount === 0) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
-                    .json({error:"Not Found"})
+                    .json({error: "Not Found"})
                 return
             }
             res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
             return
 
-        }catch(e){
+        } catch (e) {
             res
                 .status(HTTP_STATUSES.NOT_FOUND_404)
-                .json({error:"Not Found"})
+                .json({error: "Not Found"})
             return
         }
-    },
+    }
 }
 

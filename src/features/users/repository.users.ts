@@ -1,10 +1,10 @@
-import {PasswordRecoveryModel, usersCollection} from "../../db/mongo.db";
+import {PasswordRecoveryModel, UserModel} from "../../db/mongo.db";
 import {QueryModel} from "../../helpers/paginationQuereis";
 import {ObjectId, WithId} from "mongodb";
 import {RecoveryPasswordCodeModelType, UserTypeDB} from "../../types/types";
 
-export const repositoryUsers = {
-    getUsers: async ({pageSize, sortBy, pageNumber, sortDirection, searchLoginTerm, searchEmailTerm}: QueryModel) => {
+export class UsersRepository {
+    async getUsers({pageSize, sortBy, pageNumber, sortDirection, searchLoginTerm, searchEmailTerm}: QueryModel) {
 
 
         let filter: any = {}
@@ -18,18 +18,18 @@ export const repositoryUsers = {
                 }]
             }
         }
-        return await usersCollection
+        return UserModel
             .find(filter)
             .sort({[sortBy]: sortDirection === 'asc' ? 'asc' : -1})
             .skip((pageNumber - 1) * pageSize)
             .limit(pageSize)
-            .toArray();
-    },
+            .lean();
+    }
 
-    getUsersCount: async ({searchLoginTerm, searchEmailTerm}: Partial<{
+    async getUsersCount({searchLoginTerm, searchEmailTerm}: Partial<{
         searchLoginTerm: string,
         searchEmailTerm: string
-    }>) => {
+    }>) {
 
         let filter: any = {}
         if (searchLoginTerm || searchEmailTerm) {
@@ -43,55 +43,69 @@ export const repositoryUsers = {
             }
         }
 
-        const totalCount = await usersCollection.countDocuments(filter)
+        const totalCount = await UserModel.countDocuments(filter)
         return totalCount
-    },
-    createUser: async (newUser: UserTypeDB) => {
+    }
+
+    async createUser(newUser: UserTypeDB) {
 
 
-        return await usersCollection.insertOne(newUser)
-    },
-    getUserById: async (id: string) => {
-        return await usersCollection.findOne({_id: new ObjectId(id)})
-    },
-    findByLoginOrEmail: async (loginOrEmail: string) => {
+        return UserModel.insertMany([newUser])
+    }
+
+    async getUserById(id: string) {
+        return UserModel.findOne({_id: new ObjectId(id)})
+    }
+
+    async findByLoginOrEmail(loginOrEmail: string) {
 
         let filter: any = {}
         if (loginOrEmail) {
             filter = {
                 $or: [
-                    { "accountData.login": { $regex: `^${loginOrEmail}$`, $options: "i" } },
-                    { "accountData.email": { $regex: `^${loginOrEmail}$`, $options: "i" } }
+                    {"accountData.login": {$regex: `^${loginOrEmail}$`, $options: "i"}},
+                    {"accountData.email": {$regex: `^${loginOrEmail}$`, $options: "i"}}
                 ]
             }
         }
 
-        const result = await usersCollection.findOne<WithId<UserTypeDB>>(filter)
+        const result = await UserModel.findOne<WithId<UserTypeDB>>(filter)
         return result
-    },
-
-    findUserByConfirmationCode: async (code: string) => {
-        return await usersCollection.findOne({'emailConfirmation.confirmationCode': {$regex: code}})
-    },
-    deleteUserById: async (id: string) => {
-        return await usersCollection.deleteOne({_id: new ObjectId(id)})
-    },
-    updateUserConfirmation: async (id: string) => {
-        const result = await usersCollection.updateOne({_id: new ObjectId(id)}, {$set: {'emailConfirmation.isConfirmed': true}})
-        return result.modifiedCount === 1
-    },
-    updateUserConfirmationCode: async (id: string, code: string) => {
-        const result = await usersCollection.updateOne({_id: new ObjectId(id)}, {$set: {'emailConfirmation.confirmationCode': code}})
-        return result.modifiedCount === 1
-    },
-    async createRecoveryCode(recoveryCodeModel: RecoveryPasswordCodeModelType) {
-        return await PasswordRecoveryModel.insertMany([recoveryCodeModel])
-    },
-    async findRecoveryCodeDB(code: string) {
-        return PasswordRecoveryModel.findOne({recoveryCode: code})
-    },
-    async updatePassword(userId: string, newPassword: string,passwordSalt:string) {
-        return await usersCollection.updateOne({_id: new ObjectId(userId)}, {$set: {'accountData.passwordHash': newPassword,'accountData.passwordSalt':passwordSalt}})
     }
 
+    async findUserByConfirmationCode(code: string) {
+        return UserModel.findOne({'emailConfirmation.confirmationCode': {$regex: code}})
+    }
+
+    async deleteUserById(id: string) {
+        return UserModel.deleteOne({_id: new ObjectId(id)})
+    }
+
+    async updateUserConfirmation(id: string) {
+        const result = await UserModel.updateOne({_id: new ObjectId(id)}, {$set: {'emailConfirmation.isConfirmed': true}})
+        return result.modifiedCount === 1
+    }
+
+    async updateUserConfirmationCode(id: string, code: string) {
+        const result = await UserModel.updateOne({_id: new ObjectId(id)}, {$set: {'emailConfirmation.confirmationCode': code}})
+        return result.modifiedCount === 1
+    }
+
+    async createRecoveryCode(recoveryCodeModel: RecoveryPasswordCodeModelType) {
+        return await PasswordRecoveryModel.insertMany([recoveryCodeModel])
+    }
+
+    async findRecoveryCodeDB(code: string) {
+        return PasswordRecoveryModel.findOne({recoveryCode: code})
+    }
+
+    async updatePassword(userId: string, newPassword: string, passwordSalt: string) {
+        return UserModel.updateOne({_id: new ObjectId(userId)}, {
+            $set: {
+                'accountData.passwordHash': newPassword,
+                'accountData.passwordSalt': passwordSalt
+            }
+        })
+    }
 }
+

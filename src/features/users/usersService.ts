@@ -1,7 +1,7 @@
-import {repositoryUsers} from "../../features/users/repository.users";
+import {UsersRepository} from "../../features/users/repository.users";
 import {InsertOneResult, WithId} from "mongodb";
 import {QueryModel} from "../../helpers/paginationQuereis";
-import {RecoveryPasswordCodeModelType, UserTypeDB} from "../../types/types";
+import {RecoveryPasswordCodeModelType, UserDBType, UserTypeDB} from "../../types/types";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import bcrypt from "bcrypt";
 import {v4 as uuidv4} from 'uuid';
@@ -9,14 +9,23 @@ import {add} from "date-fns";
 import {emailsManager} from "../../managers/email.manager";
 
 
-export const serviceUsers = {
+export class UsersService {
+
+    usersRepository: UsersRepository
+
+    constructor() {
+
+        this.usersRepository = new UsersRepository()
+
+    }
+
     async getUsers(
         paginationQueriesForUsers: QueryModel
     ) {
         const {pageSize, pageNumber, searchLoginTerm, searchEmailTerm} = paginationQueriesForUsers
 
-        const users: WithId<UserTypeDB>[] = await repositoryUsers.getUsers(paginationQueriesForUsers)
-        const totalCount = await repositoryUsers.getUsersCount({searchLoginTerm, searchEmailTerm})
+        const users: WithId<UserTypeDB>[] = await this.usersRepository.getUsers(paginationQueriesForUsers)
+        const totalCount = await this.usersRepository.getUsersCount({searchLoginTerm, searchEmailTerm})
         return {
             pagesCount: Math.ceil(totalCount / pageSize),
             page: pageNumber,
@@ -24,40 +33,36 @@ export const serviceUsers = {
             totalCount,
             users
         }
-    },
+    }
     async createUser({login, password, email, confirmed}: CreateUserModel) {
 
         const passwordSalt = await bcrypt.genSalt()
         const passwordHash = await this._generateHash(password, passwordSalt)
 
-        const newUser = {
-            accountData: {
-                login,
-                email,
-                passwordSalt,
-                passwordHash,
-                createdAt: new Date().toISOString()
-            },
-            emailConfirmation: {
-                confirmationCode: uuidv4(),
-                expirationDate: add(new Date(),
-                    {hours: 1, minutes: 0}),
-                isConfirmed: !!confirmed
-            }
+        const newUser: UserDBType = new UserDBType({
+            login,
+            email,
+            passwordSalt,
+            passwordHash,
+            createdAt: new Date().toISOString()
+        }, {
+            confirmationCode: uuidv4(),
+            expirationDate: add(new Date(),
+                {hours: 1, minutes: 0}),
+            isConfirmed: !!confirmed
+        })
 
-        }
+        const foundObjectByLogin = await this.usersRepository.findByLoginOrEmail(login)
 
-        const foundObjectByLogin = await repositoryUsers.findByLoginOrEmail(login)
-
-        const foundObjectByEmail = await repositoryUsers.findByLoginOrEmail(email)
+        const foundObjectByEmail = await this.usersRepository.findByLoginOrEmail(email)
 
         let result: InsertOneResult<WithId<UserTypeDB>> | null
         let newUserFromDB: WithId<UserTypeDB> | null
 
         if (!foundObjectByLogin && !foundObjectByEmail) {
-            result = await repositoryUsers.createUser(newUser)
+            result = await this.usersRepository.createUser(newUser)
 
-            newUserFromDB = await repositoryUsers.getUserById(result.insertedId.toString())
+            newUserFromDB = await this.usersRepository.getUserById(result.insertedId.toString())
             try {
                 emailsManager.sendEmailConfirmationMessage(newUserFromDB).catch(e => {
                     console.log(e)
@@ -66,7 +71,7 @@ export const serviceUsers = {
 
             } catch (e) {
                 console.log(e)
-                await repositoryUsers.deleteUserById(result.insertedId.toString())
+                await this.usersRepository.deleteUserById(result.insertedId.toString())
                 return null
             }
         }
@@ -79,16 +84,16 @@ export const serviceUsers = {
             email: foundObjectByEmail,
 
         }
-    },
+    }
     async deleteUserById(id: string) {
-        const result = await repositoryUsers.deleteUserById(id)
+        const result = await this.usersRepository.deleteUserById(id)
         return result
-    },
+    }
     async _generateHash(password: string, salt: string) {
         return await bcrypt.hash(password, salt)
-    },
+    }
     async checkCredentials(loginOrEmail: string, password: string) {
-        const user = await repositoryUsers.findByLoginOrEmail(loginOrEmail)
+        const user = await this.usersRepository.findByLoginOrEmail(loginOrEmail)
         if (!user) return false
 
         if (!user.emailConfirmation.isConfirmed) return false
@@ -99,7 +104,7 @@ export const serviceUsers = {
         } else {
             return false
         }
-    },
+    }
     async createRecoveryCode(user: WithId<UserTypeDB>,email:string) {
 
         const recoveryCodeDBModel: RecoveryPasswordCodeModelType = {
@@ -109,7 +114,7 @@ export const serviceUsers = {
             expirationDate: add(new Date(), {minutes: 10})
         } // create recovery code
 
-        await repositoryUsers.createRecoveryCode(recoveryCodeDBModel) // save recovery code to db
+        await this.usersRepository.createRecoveryCode(recoveryCodeDBModel) // save recovery code to db
 
 
         emailsManager.sendPasswordRecoveryMessage(email, recoveryCodeDBModel.recoveryCode).catch(e => {
@@ -117,21 +122,21 @@ export const serviceUsers = {
             throw new Error('Cant send mail')
         })
         return true
-    },
+    }
     async changePasswordByRecoveryCode(code: string, newPassword: string) {
-        const codeModelDB = await repositoryUsers.findRecoveryCodeDB(code)
+        const codeModelDB = await this.usersRepository.findRecoveryCodeDB(code)
         if (!codeModelDB) return false
         if (codeModelDB.expirationDate < new Date()) return false
-        const user = await repositoryUsers.findByLoginOrEmail(codeModelDB.email)
+        const user = await this.usersRepository.findByLoginOrEmail(codeModelDB.email)
         if (!user) return false
 
         const passwordSalt = await bcrypt.genSalt()
         const passwordHash = await this._generateHash(newPassword, passwordSalt)
-        const res = await repositoryUsers.updatePassword(user._id.toString(), passwordHash, passwordSalt)
+        const res = await this.usersRepository.updatePassword(user._id.toString(), passwordHash, passwordSalt)
 
 
         return res.modifiedCount === 1
     }
-
-
 }
+
+export const serviceUsers = new UsersService()

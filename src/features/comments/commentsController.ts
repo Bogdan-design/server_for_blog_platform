@@ -1,26 +1,35 @@
-import {Response, Router} from "express";
+import {Response} from "express";
 import {HTTP_STATUSES} from "../../status.code";
-import {serviceComments} from "../../features/comments/service.comments";
-import {repositoryComments} from "../../features/comments/repository.comments";
 import {CommentLikeStatus, CommentType, RequestWithParams, RequestWithParamsAndBody, UserType} from "../../types/types";
 import {ObjectId, WithId} from "mongodb";
+import {CommentsService} from "./commentsService";
+import {CommentsRepository} from "./commentsRepository";
 
 
+export class CommentsController {
 
-export const commentsController = {
+    commentsService: CommentsService
+    commentsRepository: CommentsRepository
+
+    constructor(){
+        this.commentsService = new CommentsService()
+        this.commentsRepository = new CommentsRepository()
+    }
+
+
     async likeStatus(req:RequestWithParamsAndBody<{commentId: string},{likeStatus:CommentLikeStatus}>, res:Response<any>){
         try {
             const commentId = req.params.commentId
             const likeStatus = req.body.likeStatus
 
-            const comment = await repositoryComments.getCommentsById(commentId)
+            const comment = await this.commentsRepository.getCommentsById(commentId)
 
             if(!comment){
                 res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
             }
 
-            const result = await serviceComments.likeStatus({commentId, userId: comment.commentatorInfo.userId, likeStatus})
+            const result = await this.commentsService.likeStatus({commentId, userId: comment.commentatorInfo.userId, likeStatus})
 
             if(!result.acknowledged){
                 res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
@@ -37,7 +46,7 @@ export const commentsController = {
             return
         }
 
-    },
+    }
     async updateComment(req: RequestWithParamsAndBody<{ commentId: string }, {
         content: string
     }> & {
@@ -47,7 +56,7 @@ export const commentsController = {
             const id = req.params.commentId
 
             const userId = req.user._id.toString()
-            const foundComment = await repositoryComments.getCommentsById(id)
+            const foundComment = await this.commentsRepository.getCommentsById(id)
 
             if (!foundComment) {
                 res
@@ -66,7 +75,7 @@ export const commentsController = {
             }
 
             const newContent = req.body.content;
-            const newComment = await serviceComments.updateComment({id, newContent})
+            const newComment = await this.commentsService.updateComment({id, newContent})
 
             if(!newComment.acknowledged){
                 res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
@@ -84,7 +93,7 @@ export const commentsController = {
                 .json({error: "Error updating comments"});
             return
         }
-    },
+    }
     async deleteComment(req: RequestWithParams<{ commentId: string }> & {
         user: WithId<UserType>
     }, res: Response) {
@@ -93,7 +102,7 @@ export const commentsController = {
 
             const userId = req.user._id.toString()
 
-            const foundComment = await repositoryComments.getCommentsById(id)
+            const foundComment = await this.commentsRepository.getCommentsById(id)
 
             if (!foundComment) {
                 res
@@ -111,7 +120,7 @@ export const commentsController = {
                 return
             }
 
-            const result = await serviceComments.deleteComment(id)
+            const result = await this.commentsService.deleteComment(id)
 
             if (result.deletedCount === 0) {
                 res
@@ -126,7 +135,7 @@ export const commentsController = {
             console.error(err);
             res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Error deleting comment"});
         }
-    },
+    }
     async getCommentById(req: RequestWithParams<{ id: string }>, res: Response<Omit<CommentType, 'postId'> | {
         message: string
     }>) {
@@ -139,7 +148,7 @@ export const commentsController = {
                 return
             }
 
-            const comment = await repositoryComments.getCommentsById(id)
+            const comment = await this.commentsRepository.getCommentsById(id)
             if (!comment) {
                 res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
@@ -167,7 +176,7 @@ export const commentsController = {
                 .json({message: "Cant find comment"});
             return
         }
-    },
+    }
 
 }
 

@@ -9,7 +9,7 @@ import {
     UserType,
     UserTypeDB
 } from "../../types/types";
-import {serviceUsers, UsersService} from "../../features/users/usersService";
+import {UsersService} from "../../features/users/usersService";
 import {WithId} from "mongodb";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import {UserId} from "../../features/users/models/URIParamsUserIdModel";
@@ -40,7 +40,7 @@ export class UsersController {
             const query = req.query
             const paginationQueriesForUsers: QueryModel = paginationQueries(query)
 
-            const usersFromDB = await serviceUsers.getUsers(
+            const usersFromDB = await this.usersService.getUsers(
                 paginationQueriesForUsers
             )
 
@@ -75,12 +75,13 @@ export class UsersController {
         try {
 
 
-            const {login, newUserFromDB, email, result} = await serviceUsers.createUser({
+            const {login, newUserFromDB, email, result} = await this.usersService.createUser({
                 login: req.body.login,
                 password: req.body.password,
                 email: req.body.email,
                 confirmed: true
             });
+
 
             if (login) {
                 res
@@ -111,7 +112,7 @@ export class UsersController {
             }
 
 
-            if (!result.insertedId) {
+            if (!result[0]) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
                     .json({error: "Not Found"})
@@ -145,7 +146,7 @@ export class UsersController {
                 return
             }
 
-            const resDelete = await serviceUsers.deleteUserById(req.params.id)
+            const resDelete = await this.usersService.deleteUserById(req.params.id)
 
             if (resDelete.deletedCount === 0) {
                 res

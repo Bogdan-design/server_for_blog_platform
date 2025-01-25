@@ -1,5 +1,5 @@
 import {UsersRepository} from "../../features/users/repository.users";
-import {InsertOneResult, WithId} from "mongodb";
+import {WithId} from "mongodb";
 import {QueryModel} from "../../helpers/paginationQuereis";
 import {RecoveryPasswordCodeModelType, UserDBType, UserTypeDB} from "../../types/types";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
@@ -56,13 +56,12 @@ export class UsersService {
 
         const foundObjectByEmail = await this.usersRepository.findByLoginOrEmail(email)
 
-        let result: InsertOneResult<WithId<UserTypeDB>> | null
+        let result: WithId<UserTypeDB>[]
         let newUserFromDB: WithId<UserTypeDB> | null
 
         if (!foundObjectByLogin && !foundObjectByEmail) {
             result = await this.usersRepository.createUser(newUser)
-
-            newUserFromDB = await this.usersRepository.getUserById(result.insertedId.toString())
+            newUserFromDB = await this.usersRepository.getUserById(result[0]._id.toString())
             try {
                 emailsManager.sendEmailConfirmationMessage(newUserFromDB).catch(e => {
                     console.log(e)
@@ -71,7 +70,7 @@ export class UsersService {
 
             } catch (e) {
                 console.log(e)
-                await this.usersRepository.deleteUserById(result.insertedId.toString())
+                await this.usersRepository.deleteUserById(result[0]._id.toString())
                 return null
             }
         }
@@ -139,4 +138,3 @@ export class UsersService {
     }
 }
 
-export const serviceUsers = new UsersService()

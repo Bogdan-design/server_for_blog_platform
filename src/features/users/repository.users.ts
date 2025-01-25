@@ -49,7 +49,6 @@ export class UsersRepository {
 
     async createUser(newUser: UserTypeDB) {
 
-
         return UserModel.insertMany([newUser])
     }
 

@@ -1,18 +1,25 @@
-import {securityRepository} from "../../features/security/repository.security";
+import {SecurityRepository} from "./securityRepository";
 import {DeviceSessionDBType} from "../../types/types";
 import jwt from "jsonwebtoken";
 import UAParser from "ua-parser-js";
-import {jwtService} from "../../application/jwt.service";
+import {JwtService} from "../../application/jwtService";
 import {ObjectId} from "mongodb";
 import {repositoryTokens} from "../../application/repository.tokens";
 
 
-export const securityService = {
+export class SecurityService {
+    securityRepository: SecurityRepository
+    jwtService: JwtService
+    constructor(){
+        this.securityRepository = new SecurityRepository()
+        this.jwtService = new JwtService()
+    }
+
     async getAllActiveDevisesByUserId(userId: string) {
 
-        const allDevises = await securityRepository.findAllDevises(userId)
+        const allDevises = await this.securityRepository.findAllDevises(userId)
         return allDevises
-    },
+    }
     async createDeviceSession({titleForParsing, refreshToken, ip, baseUrl}: {
         titleForParsing: string,
         refreshToken: string,
@@ -49,29 +56,28 @@ export const securityService = {
             ip,
             baseUrl,
         }
-        const res = await securityRepository.saveDeviseDataToDB(newDevice)
+        const res = await this.securityRepository.saveDeviseDataToDB(newDevice)
         return res
-    },
+    }
     async countSessionsForDevice(deviceId: string) {
         const afterThatTime: Date = new Date(Date.now() - 10 * 1000)
 
-        const count = await securityRepository.countSessions(deviceId, afterThatTime)
+        const count = await this.securityRepository.countSessions(deviceId, afterThatTime)
         return count
-    },
-
+    }
     async deleteAllNotActiveDevices(token: string) {
-        const userId: ObjectId = await jwtService.getUserIdByToken(token)
-        const deviceId: string = await jwtService.getDeviceIdByToken(token)
+        const userId: ObjectId = await this.jwtService.getUserIdByToken(token)
+        const deviceId: string = await this.jwtService.getDeviceIdByToken(token)
 
-        const res = await securityRepository.deleteAllDevices(userId, deviceId)
+        const res = await this.securityRepository.deleteAllDevices(userId, deviceId)
         return res
-    },
+    }
     async deleteDevicesSessionById(token: string, deviceIdFromParams: string) {
 
-        const userId: ObjectId = await jwtService.getUserIdByToken(token)
-        const deviceId: string = await jwtService.getDeviceIdByToken(token)
+        const userId: ObjectId = await this.jwtService.getUserIdByToken(token)
+        const deviceId: string = await this.jwtService.getDeviceIdByToken(token)
 
-        const findSessionByDeviceId = await securityRepository.findSessionByDeviceId(deviceId)
+        const findSessionByDeviceId = await this.securityRepository.findSessionByDeviceId(deviceId)
         if (findSessionByDeviceId.userId !== userId.toString()) {
             throw new Error('You are not the owner of this device')
 
@@ -81,9 +87,9 @@ export const securityService = {
 
         }
 
-        const res = await securityRepository.deleteAllSessionsByDeviceId(deviceIdFromParams)
+        const res = await this.securityRepository.deleteAllSessionsByDeviceId(deviceIdFromParams)
         return res
-    },
+    }
     async updateSessionTime(refreshToken: string) {
 
         const secret = process.env.JWT_SECRET
@@ -101,15 +107,15 @@ export const securityService = {
 
         const exp = new Date(payload.exp * 1000).toISOString()
 
-        const res = await securityRepository.updateSessionTime({deviceId, iat, exp})
+        const res = await this.securityRepository.updateSessionTime({deviceId, iat, exp})
 
         return res
 
-    },
+    }
     async findSessionByDeviceIdAndIat (deviceId:string,iat:number){
         const searchIat = new Date(iat * 1000).toISOString()
 
-        const res = await securityRepository.findSessionByDeviceIdAndIat(deviceId,searchIat)
+        const res = await this.securityRepository.findSessionByDeviceIdAndIat(deviceId,searchIat)
         return res
 
     }

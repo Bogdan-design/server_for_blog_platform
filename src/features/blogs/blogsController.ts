@@ -12,10 +12,11 @@ import {CreateBlogModel} from "../../features/blogs/models/CreateBlogModel";
 import {BlogParamsType} from "../../features/blogs/models/URIParamsBlogIdModels";
 import {UpdateBlogModel} from "../../features/blogs/models/UpdateBlogModel";
 import {ObjectId, WithId} from "mongodb";
-import {serviceBlogs} from "./service.blogs";
 import {paginationQueries} from "../../helpers/paginationQuereis";
-import {servicePosts} from "../../features/posts/service.posts";
 import {getPostViewModel} from "../../features/posts/postsController";
+import {BlogsService} from "./blogsService";
+import {PostsRepository} from "../../features/posts/postsRepository";
+import {PostsService} from "../../features/posts/postsService";
 
 
 const getBlogViewModel = (dbBlog: WithId<BlogType&{__v:number}>): BlogType => {
@@ -29,7 +30,14 @@ const getBlogViewModel = (dbBlog: WithId<BlogType&{__v:number}>): BlogType => {
     }
 }
 
-export const blogsController = {
+export class BlogsController {
+
+    blogsService: BlogsService
+    postsService: PostsService
+    constructor (){
+        this.blogsService = new BlogsService()
+        this.postsService = new PostsService()
+    }
 
     async getBlogs  (req: any, res: Response<ObjectModelFromDB<BlogType> | { error: string }>): Promise<void>  {
         try {
@@ -42,7 +50,7 @@ export const blogsController = {
                 searchNameTerm
             } = paginationQueries(req)
 
-            const blogsFromDB = await serviceBlogs.getBlogs(
+            const blogsFromDB = await this.blogsService.getBlogs(
                 pageNumber,
                 pageSize,
                 sortBy,
@@ -72,7 +80,7 @@ export const blogsController = {
         }
 
 
-    },
+    }
 
     async createBlog (req: RequestWithBody<CreateBlogModel>, res: Response<BlogType | { error: string }>): Promise<void>  {
 
@@ -88,7 +96,7 @@ export const blogsController = {
             }
 
 
-            const newBlog = await serviceBlogs.createBlog(newBlogModel)
+            const newBlog = await this.blogsService.createBlog(newBlogModel)
 
             if (!newBlog) {
                 res
@@ -107,7 +115,7 @@ export const blogsController = {
                 .json({error: "Internal Server Error"});
             return
         }
-    },
+    }
     async findAllPostsForBlog (req: any, res: Response<ObjectModelFromDB<PostType> | {error: string}>) {
         //RequestWithParamsAndQuery<{blogId:string},QueryPostModel>
         try {
@@ -126,14 +134,14 @@ export const blogsController = {
                 sortDirection,
             } = paginationQueries(req)
 
-            const foundBlog = await serviceBlogs.findBlog(blogId)
+            const foundBlog = await this.blogsService.findBlog(blogId)
             if (!foundBlog) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({'error': 'Blog not found'})
                 return
             }
 
 
-            const foundAllPostsById = await servicePosts.getPosts(
+            const foundAllPostsById = await this.postsService.getPosts(
                 pageNumber,
                 pageSize,
                 sortBy,
@@ -164,7 +172,7 @@ export const blogsController = {
                 .json({error: "Internal Server Error"})
             return
         }
-    },
+    }
 
     async findBlog (req: RequestWithParams<BlogParamsType>, res: Response<BlogType | { error: string }>):Promise<void> {
         try {
@@ -175,7 +183,7 @@ export const blogsController = {
                     .json({error: "Bad Request"})
                 return
             }
-            const findBlogById = await serviceBlogs.findBlog(blogId)
+            const findBlogById = await this.blogsService.findBlog(blogId)
 
 
             if (!findBlogById) {
@@ -196,7 +204,7 @@ export const blogsController = {
             return
         }
 
-    },
+    }
 
     async updateBlog  (req: RequestWithParamsAndBody<BlogParamsType, UpdateBlogModel>, res: Response<BlogType | {
         error: string
@@ -216,7 +224,7 @@ export const blogsController = {
                 description: req.body.description,
                 websiteUrl: req.body.websiteUrl,
             }
-            const resUpdate = await serviceBlogs.updateBlog(blogId, newBody);
+            const resUpdate = await this.blogsService.updateBlog(blogId, newBody);
             if (resUpdate.matchedCount === 0) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
@@ -234,7 +242,7 @@ export const blogsController = {
             return
         }
 
-    },
+    }
 
     async deleteBlog  (req: RequestWithParams<BlogParamsType>, res: any):Promise<void> {
 
@@ -248,7 +256,7 @@ export const blogsController = {
                 return
             }
 
-            const resDelete = await serviceBlogs.deleteBlog(blogId);
+            const resDelete = await this.blogsService.deleteBlog(blogId);
 
             if (resDelete.deletedCount === 0) {
                 res

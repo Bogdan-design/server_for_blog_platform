@@ -12,7 +12,6 @@ export const emailsManager = {
         </p>`,
             subject: 'Please confirm your email'
         })
-        console.log(newUserFromDB.emailConfirmation.confirmationCode)
     },
     async sendPasswordRecoveryMessage(email:string, recoveryCode: string) {
         await emailAdapter.sendEmail({

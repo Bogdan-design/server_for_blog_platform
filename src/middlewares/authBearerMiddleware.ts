@@ -1,7 +1,10 @@
 import {NextFunction, Request, Response} from "express";
 import {HTTP_STATUSES} from "../status.code";
-import {jwtService} from "../application/jwt.service";
-import {repositoryUsers} from "../features/users/repository.users";
+import {UsersRepository} from "../features/users/repository.users";
+import {JwtService} from "../application/jwtService";
+
+const usersRepository = new UsersRepository();
+const jwtService = new JwtService();
 
 export const authBearerMiddleware = async (req:any, res:Response<any>,next:NextFunction) => {
 
@@ -14,7 +17,7 @@ export const authBearerMiddleware = async (req:any, res:Response<any>,next:NextF
 
     const userId= await jwtService.getUserIdByToken(token);
     if(userId){
-        req.user = await repositoryUsers.getUserById(userId.toString());
+        req.user = await usersRepository.getUserById(userId.toString());
 
 
       return next()

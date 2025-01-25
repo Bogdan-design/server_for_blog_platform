@@ -1,23 +1,30 @@
-import {repositoryComments} from "../../features/comments/repository.comments";
 import {CommentLikeStatus} from "../../types/types";
+import {CommentsRepository} from "./commentsRepository";
 
-export const serviceComments = {
-    updateComment: async ({id,newContent}:{id:string,newContent:string}) => {
-        const result = await repositoryComments.updateComment({id,newContent})
+export class CommentsService {
+
+    commentsRepository: CommentsRepository
+
+    constructor(){
+        this.commentsRepository = new CommentsRepository()
+    }
+
+    async updateComment  ({id,newContent}:{id:string,newContent:string}) {
+        const result = await this.commentsRepository.updateComment({id,newContent})
         return result
-    },
-    deleteComment: async (id:string) => {
-        const result = await repositoryComments.deleteComment(id)
+    }
+    async deleteComment (id:string) {
+        const result = await this.commentsRepository.deleteComment(id)
         return result
-    },
-    getCommentsByPostId: async ({
+    }
+    async getCommentsByPostId ({
                                     pageNumber,
                                     pageSize,
                                     sortBy,
                                     sortDirection,
                                     postId
-                                }) => {
-        const comments =  await repositoryComments.getCommentsByPostId({
+                                }) {
+        const comments =  await this.commentsRepository.getCommentsByPostId({
             pageNumber,
             pageSize,
             sortBy,
@@ -25,7 +32,7 @@ export const serviceComments = {
             postId
         })
 
-        const commentsCount = await repositoryComments.getCommentsCountByPostId(postId)
+        const commentsCount = await this.commentsRepository.getCommentsCountByPostId(postId)
 
         return {
             pagesCount: Math.ceil(commentsCount / pageSize),
@@ -42,10 +49,10 @@ export const serviceComments = {
                 createdAt:comment.createdAt,
             }))
         }
-    },
+    }
     async likeStatus({commentId, userId, likeStatus}: { commentId: string, userId: string, likeStatus: CommentLikeStatus }) {
 
-        const result = await repositoryComments.updateLikeStatusForComment({commentId, userId, likeStatus})
+        const result = await this.commentsRepository.updateLikeStatusForComment({commentId, userId, likeStatus})
         return result
-    },
+    }
 }

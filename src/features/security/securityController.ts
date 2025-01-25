@@ -1,9 +1,9 @@
 import {Request, Response} from "express";
 import {HTTP_STATUSES} from "../../status.code";
-import {securityService} from "../../features/security/service.security";
+import {SecurityService} from "./securityService";
 import {DeviceSessionDBType, RequestWithParams, UserTypeDB} from "../../types/types";
 import {ObjectId, WithId} from "mongodb";
-import {securityRepository} from "./repository.security";
+import {SecurityRepository} from "./securityRepository";
 import {repositoryTokens} from "../../application/repository.tokens";
 
 
@@ -17,13 +17,20 @@ const getDevisesViewModel = (dbDevise: DeviceSessionDBType) => {
 }
 
 
-export const securityController = {
+export class SecurityController {
+
+    securityService: SecurityService
+    securityRepository: SecurityRepository
+    constructor(){
+        this.securityService = new SecurityService()
+        this.securityRepository = new SecurityRepository()
+    }
 
     async getAllActiveDevices(req: Request<any> & { user: { _id: ObjectId } }, res: Response<any>): Promise<void> {
 
         try {
             const userId = req.user._id.toString()
-            const devises = await securityService.getAllActiveDevisesByUserId(userId)
+            const devises = await this.securityService.getAllActiveDevisesByUserId(userId)
 
 
             res
@@ -39,7 +46,7 @@ export const securityController = {
             return
         }
 
-    },
+    }
     async deleteNotUseDevices(req: Request<any> & { user: { _id: ObjectId } }, res: Response<any>) {
         try {
             const refreshToken: string = req.cookies.refreshToken
@@ -48,7 +55,7 @@ export const securityController = {
                 return
             }
 
-            const deleteResult = await securityService.deleteAllNotActiveDevices(refreshToken)
+            const deleteResult = await this.securityService.deleteAllNotActiveDevices(refreshToken)
             if (!deleteResult.acknowledged) {
                 res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
                 return
@@ -71,7 +78,7 @@ export const securityController = {
         }
 
 
-    },
+    }
     async deleteDevicesSessionById(req: RequestWithParams<{ deviceId: string }> & {
         user: WithId<UserTypeDB>
     }, res: Response<any>) {
@@ -86,7 +93,7 @@ export const securityController = {
                 return
             }
 
-            const device = await securityRepository.findSessionByDeviceId(deviceId)
+            const device = await this.securityRepository.findSessionByDeviceId(deviceId)
             if (!device) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json('Cant find device by id')
                 return
@@ -103,7 +110,7 @@ export const securityController = {
                 return
             }
 
-            const deleteResult = await securityService.deleteDevicesSessionById(token, deviceId)
+            const deleteResult = await this.securityService.deleteDevicesSessionById(token, deviceId)
             if (!deleteResult.acknowledged) {
                 res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return

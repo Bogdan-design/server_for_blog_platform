@@ -13,16 +13,13 @@ import {
 import {PostParamsType} from "../../features/posts/models/URIParamsPostIdModels";
 import {UpdatePostModel} from "../../features/posts/models/UpdatePostModel";
 import {paginationQueries, QueryModel} from "../../helpers/paginationQuereis";
-import {servicePosts} from "./service.posts";
-import {serviceBlogs} from "../../features/blogs/service.blogs";
-import {repositoryPosts} from "../../features/posts/repository.posts";
 import {newPostObject} from "../../helpers/newPostObject";
 import {CreatePostByBlogIdParamsModel} from "../../features/blogs/models/CreatePostByBlogIdParamsModel";
-import {serviceComments} from "../../features/comments/service.comments";
+import {CommentsService} from "../../features/comments/commentsService";
 import {paginationQueryForQueries} from "../../helpers/paginationQuereisFroComments";
-
-
-
+import {PostsService} from "./postsService";
+import {PostsRepository} from "./postsRepository";
+import {BlogsService} from "../../features/blogs/blogsService";
 
 
 export const getPostViewModel = (dbPost: WithId<PostType>): PostType => {
@@ -38,7 +35,19 @@ export const getPostViewModel = (dbPost: WithId<PostType>): PostType => {
     }
 }
 
-export const postsController = {
+export class PostsController {
+
+    postsService: PostsService
+    postsRepository: PostsRepository
+    blogsService: BlogsService
+    commentsService: CommentsService
+
+    constructor() {
+        this.postsService = new PostsService()
+        this.postsRepository = new PostsRepository()
+        this.blogsService = new BlogsService()
+        this.commentsService = new CommentsService()
+    }
 
     async getPosts(req: any, res: Response<ObjectModelFromDB<PostType> | { error: string }>) {
 
@@ -50,7 +59,7 @@ export const postsController = {
                 sortDirection,
             } = paginationQueries(req)
 
-            const postsFromDB = await servicePosts.getPosts(
+            const postsFromDB = await this.postsService.getPosts(
                 pageNumber,
                 pageSize,
                 sortBy,
@@ -76,7 +85,7 @@ export const postsController = {
             return;
         }
 
-    },
+    }
 
     async createPost(
         req: RequestWithParamsAndBody<{ blogId: string }, CreatePostByBlogIdParamsModel>,
@@ -89,7 +98,7 @@ export const postsController = {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
                     .json({
-                        errorsMessages:[
+                        errorsMessages: [
                             {
                                 field: 'blogId',
                                 message: 'Wrong blogId'
@@ -99,7 +108,7 @@ export const postsController = {
                 return
             }
 
-            const blogForNewPost = await serviceBlogs.findBlog(blogId)
+            const blogForNewPost = await this.blogsService.findBlog(blogId)
             if (!blogForNewPost) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
@@ -108,9 +117,9 @@ export const postsController = {
             }
             const newPost = newPostObject(req, blogId, blogForNewPost)
 
-            const {result, createdNewPost} = await servicePosts.createPost(newPost,)
+            const {result, createdNewPost} = await this.postsService.createPost(newPost,)
 
-            if (!result.insertedId) {
+            if (!result[0]) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
                     .json({error: 'Cannot create Post'})
@@ -138,7 +147,7 @@ export const postsController = {
 
         }
 
-    },
+    }
 
 
     async findPost(req: RequestWithParams<PostParamsType>, res: Response<PostType | { error: string }>) {
@@ -150,7 +159,7 @@ export const postsController = {
                 return;
             }
 
-            const findPostsById = await repositoryPosts.findPostByPostId(postId)
+            const findPostsById = await this.postsRepository.findPostByPostId(postId)
 
 
             if (!findPostsById) {
@@ -175,13 +184,13 @@ export const postsController = {
         }
 
 
-    },
+    }
 
     async updatePost(req: RequestWithParamsAndBody<PostParamsType, UpdatePostModel>, res: any) {
         try {
             const postId = req.params.id;
 
-            const foundPost = await servicePosts.updatePost(postId, req.body);
+            const foundPost = await this.postsService.updatePost(postId, req.body);
             if (foundPost.matchedCount === 0) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
                 return
@@ -197,18 +206,20 @@ export const postsController = {
         }
 
 
-    },
+    }
 
-    async deletePost(req: RequestWithParams<PostParamsType>, res: Response<ExpectedErrorObjectType | {error: string}>): Promise<void> {
+    async deletePost(req: RequestWithParams<PostParamsType>, res: Response<ExpectedErrorObjectType | {
+        error: string
+    }>): Promise<void> {
         try {
             const postId = req.params.id
 
-            if(!ObjectId.isValid(postId)){
+            if (!ObjectId.isValid(postId)) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Invalid post ID"})
                 return
             }
 
-            const resDelete = await servicePosts.deletePost(postId)
+            const resDelete = await this.postsService.deletePost(postId)
 
             if (resDelete.deletedCount === 0) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Dont founded post"})
@@ -223,7 +234,7 @@ export const postsController = {
             res.status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500).json({error: "Internal Server Error"});
             return
         }
-    },
+    }
 
     async createComment(req: RequestWithParamsAndBody<{ postId: string }, { content: string }> & {
         user: WithId<UserType>
@@ -233,7 +244,7 @@ export const postsController = {
 
             const id = req.params.postId;
 
-            const findPostById = await repositoryPosts.findPostByPostId(id)
+            const findPostById = await this.postsRepository.findPostByPostId(id)
             if (!findPostById) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
                 return
@@ -246,9 +257,9 @@ export const postsController = {
                 return;
             }
 
-            const {comment, result} = await servicePosts.createComment({postId: id, content: req.body.content, userId});
+            const {comment, result} = await this.postsService.createComment({postId: id, content: req.body.content, userId});
 
-            if (!result.acknowledged) {
+            if (!result[0]) {
                 res
                     .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
                     .json({error: "Internal Server Error"});
@@ -263,7 +274,8 @@ export const postsController = {
             res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
             return
         }
-    },
+    }
+
     async getCommentsByPostId(req: RequestWithParamsAndQuery<{ postId: string }, QueryModel>, res: Response<any>) {
 
         try {
@@ -272,7 +284,7 @@ export const postsController = {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
                 return
             }
-            const result = await repositoryPosts.findPostByPostId(postId);
+            const result = await this.postsRepository.findPostByPostId(postId);
             if (!result) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Cannot find post with that id"})
                 return
@@ -285,7 +297,7 @@ export const postsController = {
                 sortDirection
             } = paginationQueryForQueries(req.query)
 
-            const getComments = await serviceComments.getCommentsByPostId({
+            const getComments = await this.commentsService.getCommentsByPostId({
                 pageNumber,
                 pageSize,
                 sortBy,

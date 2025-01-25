@@ -1,9 +1,14 @@
 import {NextFunction, Response} from "express";
 import {HTTP_STATUSES} from "../status.code";
-import {jwtService} from "../application/jwt.service";
-import {repositoryUsers} from "../features/users/repository.users";
 import {repositoryTokens} from "../application/repository.tokens";
-import {securityService} from "../features/security/service.security";
+import {SecurityService} from "../features/security/securityService";
+import {UsersRepository} from "../features/users/repository.users";
+import {JwtService} from "../application/jwtService";
+
+const usersRepository = new UsersRepository();
+const jwtService = new JwtService();
+const securityService = new SecurityService();
+
 
 export const authRefreshTokenMiddleware = async (req: any, res: Response<any>, next: NextFunction) => {
 
@@ -33,7 +38,7 @@ export const authRefreshTokenMiddleware = async (req: any, res: Response<any>, n
     }
 
     if (userId) {
-        req.user = await repositoryUsers.getUserById(userId.toString());
+        req.user = await usersRepository.getUserById(userId.toString());
         req.deviceId = deviceId
 
         return next()

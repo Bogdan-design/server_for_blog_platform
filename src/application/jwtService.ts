@@ -3,7 +3,7 @@ import jwt, {JwtPayload} from "jsonwebtoken";
 import {ObjectId, WithId} from "mongodb";
 import {v4 as uuidv4} from "uuid";
 
-export const jwtService = {
+export class JwtService {
     async createJWT(user: WithId<UserTypeDB>, oldDeviceId?: string) {
 
         const deviceId = oldDeviceId ? oldDeviceId : uuidv4()
@@ -18,7 +18,7 @@ export const jwtService = {
 
 
         return {accessToken, refreshToken}
-    },
+    }
     async getUserIdByToken(token: string) {
         try {
             const secret = process.env.JWT_SECRET
@@ -35,7 +35,7 @@ export const jwtService = {
             console.log(e)
             return null;
         }
-    },
+    }
     async getDeviceIdByToken(token: string) {
         try {
             const secret = process.env.JWT_SECRET
@@ -56,7 +56,7 @@ export const jwtService = {
             return null;
         }
 
-    },
+    }
     async getTokenPayload (token:string) {
         const secret = process.env.JWT_SECRET
         const payload = jwt.verify(token, secret);

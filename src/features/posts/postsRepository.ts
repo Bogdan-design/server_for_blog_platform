@@ -1,9 +1,9 @@
 import {ObjectId, SortDirection} from "mongodb";
-import {postCollection} from "../../db/mongo.db";
+import {PostModel} from "../../db/mongo.db";
 import {PostType} from "../../types/types";
 import {UpdatePostModel} from "../../features/posts/models/UpdatePostModel";
 
-export const repositoryPosts = {
+export class PostsRepository {
     async getPosts(
         pageNumber: number,
         pageSize: number,
@@ -13,30 +13,30 @@ export const repositoryPosts = {
     ) {
         const filter: any = blogId ? {blogId: {$regex: blogId}} : {}
 
-        return await postCollection
+        return PostModel
             .find(filter)
             .sort({[sortBy]: sortDirection === 'asc' ? 'asc' : -1})
             .skip((pageNumber - 1) * pageSize)
             .limit(pageSize)
-            .toArray()
-    },
+            .lean()
+    }
     async getPostCount(blogId?: string) {
         const filter: any = blogId ? {blogId: {$regex: blogId}} : {}
-        return await postCollection.countDocuments(filter)
-    },
+        return PostModel.countDocuments(filter)
+    }
     async createPost(newPost: PostType) {
-        return await postCollection.insertOne(newPost)
-    },
+        return PostModel.insertMany([newPost])
+    }
     async findPostByPostId(postId: string) {
-        return await postCollection.findOne({_id: new ObjectId(postId)})
-    },
+        return PostModel.findOne({_id: new ObjectId(postId)})
+    }
     async updatePost(postId: string, newBodyPost: UpdatePostModel) {
-        return await postCollection.updateOne(
+        return PostModel.updateOne(
             {_id: new ObjectId(postId)},
             {$set: {...newBodyPost}},
         )
-    },
+    }
     async deletePost(postId: string) {
-        return await postCollection.deleteOne({_id: new ObjectId(postId)})
+        return PostModel.deleteOne({_id: new ObjectId(postId)})
     }
 }

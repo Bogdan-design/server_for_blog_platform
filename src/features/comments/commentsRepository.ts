@@ -1,25 +1,26 @@
-import {commentsCollection, postCollection, usersCollection} from "../../db/mongo.db";
-import {ObjectId, SortDirection} from "mongodb";
+import {ObjectId} from "mongodb";
 import {CommentType} from "../../types/types";
+import {CommentsModel} from "../../db/mongo.db";
 
-export const repositoryComments = {
+export class CommentsRepository {
     async createComment(newComment: CommentType) {
-        const result = await commentsCollection.insertOne(newComment)
+        const result = await CommentsModel.insertMany([newComment])
         return result
-    },
-    updateComment: async ({id, newContent}: { id: string, newContent: string }) => {
-        const result = await commentsCollection.updateOne({_id: new ObjectId(id)}, {$set: {content: newContent}});
+    }
+    async updateComment ({id, newContent}: { id: string, newContent: string }) {
+        const result = await CommentsModel.updateOne({_id: new ObjectId(id)}, {$set: {content: newContent}});
         return result;
-    },
-    deleteComment: async (id: string) => {
-        const result = await commentsCollection.deleteOne({_id: new ObjectId(id)})
+    }
+    async deleteComment  (id: string) {
+        const result = await CommentsModel.deleteOne({_id: new ObjectId(id)})
         return result
-    },
-    getCommentsById: async (id: string) => {
-        const comment = await commentsCollection.findOne({_id: new ObjectId(id)})
+    }
+    async getCommentsById  (id: string) {
+        const comment = await CommentsModel.findOne({_id: new ObjectId(id)})
+
         return comment
-    },
-    getCommentsByPostId: async (
+    }
+    async getCommentsByPostId  (
         {
             pageNumber,
             pageSize,
@@ -27,21 +28,21 @@ export const repositoryComments = {
             sortDirection,
             postId
         }
-    ) => {
+    )  {
         const filter: any = postId ? {postId: {$regex: postId}} : {}
-        return await commentsCollection
+        return CommentsModel
             .find(filter)
             .sort({[sortBy]: sortDirection === 'asc' ? 'asc' : -1})
             .skip((pageNumber - 1) * pageSize)
             .limit(pageSize)
-            .toArray()
-    },
+            .lean()
+    }
     async getCommentsCountByPostId (postId: string) {
         const filter: any = postId ? {postId: {$regex: postId}} : {}
-        return await commentsCollection.countDocuments(filter)
-    },
+        return CommentsModel.countDocuments(filter)
+    }
     async updateLikeStatusForComment({commentId, userId, likeStatus}: { commentId: string, userId: string, likeStatus: string }) {
-        const result = await commentsCollection.updateOne({_id: new ObjectId(commentId)}, {
+        const result = await CommentsModel.updateOne({_id: new ObjectId(commentId)}, {
             $set: {
                 "likeInfo.likesCount": likeStatus === 'like' ? 1 : 0,
                 "likeInfo.dislikesCount": likeStatus === 'dislike' ? 1 : 0,

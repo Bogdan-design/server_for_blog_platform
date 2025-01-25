@@ -1,9 +1,14 @@
 import {SortDirection} from "mongodb";
-import {blogsRepository} from "./repository.blogs";
 import {BlogType} from "../../types/types";
 import {UpdateBlogModel} from "../../features/blogs/models/UpdateBlogModel";
+import {BlogsRepository} from "./blogsRepository";
 
-export const serviceBlogs = {
+export class BlogsService {
+    blogsRepository: BlogsRepository
+    constructor() {
+        this.blogsRepository = new BlogsRepository()
+    }
+
     async getBlogs (
         pageNumber: number,
         pageSize: number,
@@ -12,7 +17,7 @@ export const serviceBlogs = {
         searchNameTerm: string
     ) {
 
-        const blogs = await blogsRepository.getBlogs(
+        const blogs = await this.blogsRepository.getBlogs(
             pageNumber,
             pageSize,
             sortBy,
@@ -20,7 +25,7 @@ export const serviceBlogs = {
             searchNameTerm
         )
 
-        const blogsCount = await blogsRepository.getBlogsCount(
+        const blogsCount = await this.blogsRepository.getBlogsCount(
             searchNameTerm
         )
 
@@ -33,20 +38,20 @@ export const serviceBlogs = {
             sortDirection,
             items: blogs
         }
-    },
+    }
     async createBlog (newBlogModel: BlogType) {
 
-        const newBlog = await blogsRepository.createBlog(newBlogModel)
+        const newBlog = await this.blogsRepository.createBlog(newBlogModel)
 
         return newBlog
-    },
+    }
     async findBlog  (blogId: string) {
-        return await blogsRepository.findBlogById(blogId)
-    },
+        return this.blogsRepository.findBlogById(blogId)
+    }
     async updateBlog (blogId: string, newBody: UpdateBlogModel)  {
-        return await blogsRepository.updateBlog(blogId,newBody)
-    },
+        return this.blogsRepository.updateBlog(blogId,newBody)
+    }
     async deleteBlog (blogId: string)  {
-        return await blogsRepository.deleteBlog(blogId)
+        return this.blogsRepository.deleteBlog(blogId)
     }
 }

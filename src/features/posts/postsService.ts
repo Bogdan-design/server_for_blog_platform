@@ -1,9 +1,9 @@
 import {SortDirection} from "mongodb";
 import {PostsRepository} from "../../features/posts/postsRepository";
-import {CommentLikeStatus, CommentType, PostType} from "../../types/types";
+import {LikeStatus, CommentType, PostType} from "../../types/types";
 import {UpdatePostModel} from "../../features/posts/models/UpdatePostModel";
 import {CommentsRepository} from "../../features/comments/commentsRepository";
-import {UsersRepository} from "../../features/users/repository.users";
+import {UsersRepository} from "src/features/users/usersRepository";
 
 export class PostsService {
     postsRepository: PostsRepository
@@ -77,7 +77,7 @@ export class PostsService {
             likesInfo: {
                 likesCount: 0,
                 dislikesCount: 0,
-                myStatus: CommentLikeStatus.None
+                myStatus: LikeStatus.None
             }
         }
 

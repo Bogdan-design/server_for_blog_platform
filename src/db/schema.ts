@@ -3,7 +3,7 @@ import {
     BlackListRefreshTokensType,
     BlogType,
     CommentType, DeviceSessionDBType,
-    LikeInfoType,
+    LikeInfoType, LikeStatus,
     PostType,
     RecoveryPasswordCodeModelType, SessionType,
     UserDBType,
@@ -11,7 +11,7 @@ import {
 } from "../types/types";
 
 export const BlogSchema = new mongoose.Schema<BlogType>({
-    id: {type: String, required: true},
+    id: String,
     name: {type: String, required: true},
     description: {type: String, required: true},
     websiteUrl: {type: String, required: true},
@@ -20,7 +20,7 @@ export const BlogSchema = new mongoose.Schema<BlogType>({
 });
 
 export const PostSchema = new mongoose.Schema<PostType>({
-    id: {type: String, required: true},
+    id: String,
     title: {type: String, required: true},
     shortDescription: {type: String, required: true},
     content: {type: String, required: true},
@@ -29,6 +29,13 @@ export const PostSchema = new mongoose.Schema<PostType>({
     createdAt: {type: String, required: true}
 })
 
+export const likesSchema = new mongoose.Schema({
+        createdAt: {type: Date, required: true},
+        status: {type: LikeStatus, required: true},
+        authorId: {type: String, required: true},
+        parentId: {type: String, required: true},
+    } // commentId, postId, etc..
+)
 
 
 export const LikeInfoSchema = new mongoose.Schema<LikeInfoType>({
@@ -38,7 +45,7 @@ export const LikeInfoSchema = new mongoose.Schema<LikeInfoType>({
 })
 
 export const CommentsSchema = new mongoose.Schema<CommentType>({
-    id: {type: String, required: true},
+    id: String,
     postId: {type: String, required: true},
     content: {type: String, required: true},
     commentatorInfo: {
@@ -46,12 +53,13 @@ export const CommentsSchema = new mongoose.Schema<CommentType>({
         userLogin: {type: String, required: true}
     },
     createdAt: {type: String, required: true},
-    likesInfo: LikeInfoSchema
+    likes: {type: [likesSchema]},
+    likesInfo: {type: LikeInfoSchema}
 })
 
 export const PasswordRecoverySchema = new mongoose.Schema<RecoveryPasswordCodeModelType>({
     email: {type: String, required: true},
-    userId:{type: String, required: true},
+    userId: {type: String, required: true},
     recoveryCode: {type: String, required: true},
     expirationDate: {type: Date, required: true},
 })
@@ -66,7 +74,7 @@ export const UserSchema = new mongoose.Schema<UserType>({
 })
 
 export const UserDBSchema = new mongoose.Schema<UserDBType>({
-    accountData: UserSchema,
+    accountData: {type: UserSchema},
     emailConfirmation: {
         confirmationCode: {type: String, required: true},
         expirationDate: {type: Date, required: true},

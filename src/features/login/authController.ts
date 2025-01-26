@@ -10,7 +10,7 @@ import {repositoryTokens} from "../../application/repository.tokens";
 import {AuthLoginModel} from "../../features/login/models/AuthLoginModel";
 import {SecurityRepository} from "../../features/security/securityRepository";
 import {UsersService} from "../../features/users/usersService";
-import {UsersRepository} from "../../features/users/repository.users";
+import {UsersRepository} from "src/features/users/usersRepository";
 
 export class AuthController  {
     authService: authService

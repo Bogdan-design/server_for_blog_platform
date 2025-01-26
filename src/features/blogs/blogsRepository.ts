@@ -30,6 +30,7 @@ export class BlogsRepository {
         return BlogModel.countDocuments(filter)
     }
     async createBlog  (newBlogModel:BlogType)  {
+
         return  BlogModel.insertMany([newBlogModel])
     }
     // async findOneBlog (result:InsertOneResult<BlogType>)  {

@@ -5,11 +5,12 @@ import {BlogsRepository} from "./blogsRepository";
 
 export class BlogsService {
     blogsRepository: BlogsRepository
+
     constructor() {
         this.blogsRepository = new BlogsRepository()
     }
 
-    async getBlogs (
+    async getBlogs(
         pageNumber: number,
         pageSize: number,
         sortBy: string,
@@ -39,19 +40,23 @@ export class BlogsService {
             items: blogs
         }
     }
-    async createBlog (newBlogModel: BlogType) {
+
+    async createBlog(newBlogModel: BlogType) {
 
         const newBlog = await this.blogsRepository.createBlog(newBlogModel)
 
         return newBlog
     }
-    async findBlog  (blogId: string) {
+
+    async findBlog(blogId: string) {
         return this.blogsRepository.findBlogById(blogId)
     }
-    async updateBlog (blogId: string, newBody: UpdateBlogModel)  {
-        return this.blogsRepository.updateBlog(blogId,newBody)
+
+    async updateBlog(blogId: string, newBody: UpdateBlogModel) {
+        return this.blogsRepository.updateBlog(blogId, newBody)
     }
-    async deleteBlog (blogId: string)  {
+
+    async deleteBlog(blogId: string) {
         return this.blogsRepository.deleteBlog(blogId)
     }
 }

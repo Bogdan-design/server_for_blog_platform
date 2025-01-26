@@ -14,12 +14,11 @@ import {UpdateBlogModel} from "../../features/blogs/models/UpdateBlogModel";
 import {ObjectId, WithId} from "mongodb";
 import {paginationQueries} from "../../helpers/paginationQuereis";
 import {getPostViewModel} from "../../features/posts/postsController";
-import {BlogsService} from "./blogsService";
-import {PostsRepository} from "../../features/posts/postsRepository";
 import {PostsService} from "../../features/posts/postsService";
+import {BlogsService} from "./blogsService";
 
 
-const getBlogViewModel = (dbBlog: WithId<BlogType&{__v:number}>): BlogType => {
+const getBlogViewModel = (dbBlog: WithId<BlogType & { __v: number }>): BlogType => {
     return {
         id: dbBlog._id.toString(),
         name: dbBlog.name,
@@ -34,12 +33,13 @@ export class BlogsController {
 
     blogsService: BlogsService
     postsService: PostsService
-    constructor (){
+
+    constructor() {
         this.blogsService = new BlogsService()
         this.postsService = new PostsService()
     }
 
-    async getBlogs  (req: any, res: Response<ObjectModelFromDB<BlogType> | { error: string }>): Promise<void>  {
+    async getBlogs(req: any, res: Response<ObjectModelFromDB<BlogType> | { error: string }>): Promise<void> {
         try {
 
             const {
@@ -82,7 +82,9 @@ export class BlogsController {
 
     }
 
-    async createBlog (req: RequestWithBody<CreateBlogModel>, res: Response<BlogType | { error: string }>): Promise<void>  {
+    async createBlog(req: RequestWithBody<CreateBlogModel>, res: Response<BlogType | {
+        error: string
+    }>): Promise<void> {
 
 
         try {
@@ -98,7 +100,7 @@ export class BlogsController {
 
             const newBlog = await this.blogsService.createBlog(newBlogModel)
 
-            if (!newBlog) {
+            if (!newBlog[0]) {
                 res
                     .sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
@@ -116,11 +118,12 @@ export class BlogsController {
             return
         }
     }
-    async findAllPostsForBlog (req: any, res: Response<ObjectModelFromDB<PostType> | {error: string}>) {
+
+    async findAllPostsForBlog(req: any, res: Response<ObjectModelFromDB<PostType> | { error: string }>) {
         //RequestWithParamsAndQuery<{blogId:string},QueryPostModel>
         try {
-        const blogId = req.params.blogId
-            if (!blogId || typeof blogId !== "string" ||!ObjectId.isValid(blogId)) {
+            const blogId = req.params.blogId
+            if (!blogId || typeof blogId !== "string" || !ObjectId.isValid(blogId)) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
                     .json({error: "Invalid blog ID"});
@@ -155,15 +158,15 @@ export class BlogsController {
                     .json({error: 'Blog not found'})
                 return
             }
-                res
-                    .status(HTTP_STATUSES.OK_200)
-                    .json({
-                        pagesCount: foundAllPostsById.pageCount,
-                        page: foundAllPostsById.page,
-                        pageSize: foundAllPostsById.pageSize,
-                        totalCount: foundAllPostsById.totalCount,
-                        items: foundAllPostsById.items.map(getPostViewModel)
-                    })
+            res
+                .status(HTTP_STATUSES.OK_200)
+                .json({
+                    pagesCount: foundAllPostsById.pageCount,
+                    page: foundAllPostsById.page,
+                    pageSize: foundAllPostsById.pageSize,
+                    totalCount: foundAllPostsById.totalCount,
+                    items: foundAllPostsById.items.map(getPostViewModel)
+                })
 
 
         } catch (e) {
@@ -174,7 +177,7 @@ export class BlogsController {
         }
     }
 
-    async findBlog (req: RequestWithParams<BlogParamsType>, res: Response<BlogType | { error: string }>):Promise<void> {
+    async findBlog(req: RequestWithParams<BlogParamsType>, res: Response<BlogType | { error: string }>): Promise<void> {
         try {
             const blogId = req.params.id;
             if (!blogId || !ObjectId.isValid(blogId)) {
@@ -206,9 +209,9 @@ export class BlogsController {
 
     }
 
-    async updateBlog  (req: RequestWithParamsAndBody<BlogParamsType, UpdateBlogModel>, res: Response<BlogType | {
+    async updateBlog(req: RequestWithParamsAndBody<BlogParamsType, UpdateBlogModel>, res: Response<BlogType | {
         error: string
-    }>): Promise<void>  {
+    }>): Promise<void> {
 
         try {
             const blogId = req.params.id;
@@ -244,12 +247,12 @@ export class BlogsController {
 
     }
 
-    async deleteBlog  (req: RequestWithParams<BlogParamsType>, res: any):Promise<void> {
+    async deleteBlog(req: RequestWithParams<BlogParamsType>, res: any): Promise<void> {
 
         try {
 
             const blogId = req.params.id;
-            if(!ObjectId.isValid(blogId)){
+            if (!ObjectId.isValid(blogId)) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
                     .json({error: "Invalid blog ID"})

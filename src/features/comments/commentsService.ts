@@ -1,4 +1,4 @@
-import {CommentLikeStatus} from "../../types/types";
+import {LikeStatus} from "../../types/types";
 import {CommentsRepository} from "./commentsRepository";
 
 export class CommentsService {
@@ -50,7 +50,7 @@ export class CommentsService {
             }))
         }
     }
-    async likeStatus({commentId, userId, likeStatus}: { commentId: string, userId: string, likeStatus: CommentLikeStatus }) {
+    async likeStatus({commentId, userId, likeStatus}: { commentId: string, userId: string, likeStatus: LikeStatus }) {
 
         const result = await this.commentsRepository.updateLikeStatusForComment({commentId, userId, likeStatus})
         return result

@@ -90,10 +90,17 @@ export type BlackListRefreshTokensType = {
     refreshToken: string
 }
 
+export type LikeType={
+    createdAt: string
+    status: LikeStatus
+    authorId: string
+    parentId: string
+}
+
 export type LikeInfoType = {
     likesCount: number
     dislikesCount: number
-    myStatus: CommentLikeStatus
+    myStatus: LikeStatus
 }
 
 export type CommentType = {
@@ -105,6 +112,7 @@ export type CommentType = {
         userLogin: string
     }
     createdAt: string
+    likes: LikeType[]
     likesInfo: LikeInfoType
 }
 
@@ -124,7 +132,7 @@ export type RequestWithParamsAndBody<T, B> = Request<T, {}, B>
 export type RequestWithParamsAndQuery<T, B> = Request<T, {}, {}, B>
 
 
-export enum CommentLikeStatus {
+export enum LikeStatus {
     like = 'like',
     dislike = 'dislike',
     None = 'None'

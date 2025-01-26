@@ -1,6 +1,6 @@
 import {emailsManager} from "../../managers/email.manager";
 import {v4 as uuidv4} from "uuid";
-import {UsersRepository} from "../../features/users/repository.users";
+import {UsersRepository} from "src/features/users/usersRepository";
 
 export class authService {
     repositoryUsers: UsersRepository

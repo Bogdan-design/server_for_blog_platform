@@ -1,6 +1,6 @@
 import {Response} from "express";
 import {HTTP_STATUSES} from "../../status.code";
-import {CommentLikeStatus, CommentType, RequestWithParams, RequestWithParamsAndBody, UserType} from "../../types/types";
+import {LikeStatus, CommentType, RequestWithParams, RequestWithParamsAndBody, UserType} from "../../types/types";
 import {ObjectId, WithId} from "mongodb";
 import {CommentsService} from "./commentsService";
 import {CommentsRepository} from "./commentsRepository";
@@ -17,7 +17,7 @@ export class CommentsController {
     }
 
 
-    async likeStatus(req:RequestWithParamsAndBody<{commentId: string},{likeStatus:CommentLikeStatus}>, res:Response<any>){
+    async likeStatus(req:RequestWithParamsAndBody<{commentId: string},{likeStatus:LikeStatus}>, res:Response<any>){
         try {
             const commentId = req.params.commentId
             const likeStatus = req.body.likeStatus

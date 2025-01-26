@@ -1,4 +1,4 @@
-import {UsersRepository} from "../../features/users/repository.users";
+import {UsersRepository} from "./usersRepository";
 import {WithId} from "mongodb";
 import {QueryModel} from "../../helpers/paginationQuereis";
 import {RecoveryPasswordCodeModelType, UserDBType, UserTypeDB} from "../../types/types";
@@ -7,15 +7,14 @@ import bcrypt from "bcrypt";
 import {v4 as uuidv4} from 'uuid';
 import {add} from "date-fns";
 import {emailsManager} from "../../managers/email.manager";
+import {inject, injectable} from "inversify";
 
-
+@injectable()
 export class UsersService {
 
-    usersRepository: UsersRepository
 
-    constructor() {
+    constructor(@inject(UsersRepository) protected usersRepository: UsersRepository) {
 
-        this.usersRepository = new UsersRepository()
 
     }
 

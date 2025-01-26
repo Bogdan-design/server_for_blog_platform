@@ -2,7 +2,9 @@ import {PasswordRecoveryModel, UserModel} from "../../db/mongo.db";
 import {QueryModel} from "../../helpers/paginationQuereis";
 import {ObjectId, WithId} from "mongodb";
 import {RecoveryPasswordCodeModelType, UserTypeDB} from "../../types/types";
+import {injectable} from "inversify";
 
+@injectable()
 export class UsersRepository {
     async getUsers({pageSize, sortBy, pageNumber, sortDirection, searchLoginTerm, searchEmailTerm}: QueryModel) {
 

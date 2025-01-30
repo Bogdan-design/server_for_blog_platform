@@ -7,13 +7,12 @@ import bcrypt from "bcrypt";
 import {v4 as uuidv4} from 'uuid';
 import {add} from "date-fns";
 import {emailsManager} from "../../managers/email.manager";
-import {inject, injectable} from "inversify";
 
-@injectable()
+
 export class UsersService {
 
 
-    constructor(@inject(UsersRepository) protected usersRepository: UsersRepository) {
+    constructor( protected usersRepository: UsersRepository) {
 
 
     }

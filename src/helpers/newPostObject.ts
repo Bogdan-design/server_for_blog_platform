@@ -8,7 +8,11 @@ export const newPostObject = (req: RequestWithBody<CreatePostByBlogIdParamsModel
         content: req.body.content,
         blogId: blogId,
         blogName: blogForNewPost.name,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        likesInfo:{
+            likesCount:0,
+            dislikesCount:0
+        }
 
     }
     return newPost

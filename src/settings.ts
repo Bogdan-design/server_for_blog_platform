@@ -25,4 +25,5 @@ export const SETTINGS = {
     SESSIONS:'sessions',
     RECOVERY_PASSWORD:'recovery_password',
     LIKES:'likes',
+    POSTS_LIKES:'posts_likes'
 }

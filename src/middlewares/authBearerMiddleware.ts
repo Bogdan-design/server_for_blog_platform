@@ -1,6 +1,6 @@
 import {NextFunction, Request, Response} from "express";
 import {HTTP_STATUSES} from "../status.code";
-import {UsersRepository} from "src/features/users/usersRepository";
+import {UsersRepository} from "../features/users/usersRepository";
 import {JwtService} from "../application/jwtService";
 
 const usersRepository = new UsersRepository();

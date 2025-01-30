@@ -1,9 +1,18 @@
 import {ObjectId, SortDirection} from "mongodb";
-import {PostModel} from "../../db/mongo.db";
-import {PostType} from "../../types/types";
+import {LikeForPostsModel, PostModel} from "../../db/mongo.db";
+import {LikeForPostType, PostType} from "../../types/types";
 import {UpdatePostModel} from "../../features/posts/models/UpdatePostModel";
 
 export class PostsRepository {
+    async createLikeForPost(like:LikeForPostType){
+        return LikeForPostsModel.insertMany([like])
+    }
+    async getPreviousLike(userId: string, postId: string){
+        return LikeForPostsModel.findOne({userId,postId})
+    }
+    async findAllLikesForPost(postId:string){
+        return LikeForPostsModel.find({postId}).lean()
+    }
     async getPosts(
         pageNumber: number,
         pageSize: number,

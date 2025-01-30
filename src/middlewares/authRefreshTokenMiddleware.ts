@@ -2,7 +2,7 @@ import {NextFunction, Response} from "express";
 import {HTTP_STATUSES} from "../status.code";
 import {repositoryTokens} from "../application/repository.tokens";
 import {SecurityService} from "../features/security/securityService";
-import {UsersRepository} from "src/features/users/usersRepository";
+import {UsersRepository} from "../features/users/usersRepository";
 import {JwtService} from "../application/jwtService";
 
 const usersRepository = new UsersRepository();

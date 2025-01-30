@@ -13,7 +13,6 @@ import {UsersService} from "../../features/users/usersService";
 import {WithId} from "mongodb";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import {UserId} from "../../features/users/models/URIParamsUserIdModel";
-import {inject, injectable} from "inversify";
 
 
 const getUsersViewModel = (dbUser: WithId<UserTypeDB>): UserType => {
@@ -25,11 +24,11 @@ const getUsersViewModel = (dbUser: WithId<UserTypeDB>): UserType => {
     }
 }
 
-@injectable()
+
 export class UsersController {
 
 
-    constructor(@inject(UsersService) protected usersService: UsersService){}
+    constructor( protected usersService: UsersService){}
 
     async getUsers(req: any, res: Response<ObjectModelFromDB<UserType> | { error: string }>): Promise<void> {
         // RequestWithQuery<QueryModel>

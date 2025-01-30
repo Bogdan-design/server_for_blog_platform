@@ -5,35 +5,7 @@ import {ObjectId} from "mongodb";
 import {BlogModel, PasswordRecoveryModel} from "../db/mongo.db";
 
 export const idValidation = param("id").notEmpty().isString()
-// export const blogIdParamsValidation = param("blogId").notEmpty().isString().custom(
-//     async (blogId: string) => {
-//
-//         const res = await BlogModel.findOne({_id: new ObjectId(blogId)})
-//         if (!res) {
-//             throw new Error("blogId not found")
-//         }
-//         return true
-//     }).withMessage("Wrong blogId")
-//
-// export const postIdParamValidation = param('postId').trim().notEmpty().custom(
-//     async (postId: string) => {
-//         const res = await repositoryPosts.findPostByPostId(postId)
-//         if (!res) {
-//             throw new Error("blogId not found")
-//         }
-//         return true
-//     }
-// )
-//
-// export const commentIdParamValidation = param('commentId').trim().notEmpty().custom(
-//     async (commentId: string) => {
-//         const res = await blogCollection.findOne({_id: new ObjectId(commentId)})
-//         if (!res) {
-//             throw new Error("commentId not found")
-//         }
-//         return true
-//     }
-// )
+
 
 export const blogIdValidation = body("blogId").notEmpty().isString().custom(
     async (blogId: string) => {
@@ -65,6 +37,10 @@ export const errorsMiddleware = (req: Request, res: Response, next: NextFunction
 
 }
 
+export const likeInputValidationBodyMiddleware =[
+    body("likeStatus").trim().notEmpty().isString().isIn(["Like", "Dislike","None"]).withMessage("likeStatus must be Like or Dislike"),
+    errorsMiddleware
+]
 
 export const blogInputValidationBodyMiddleware = [
     body("name").trim().notEmpty().isLength({max: 15}),

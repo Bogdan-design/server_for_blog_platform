@@ -165,7 +165,7 @@ export class BlogsController {
                     page: foundAllPostsById.page,
                     pageSize: foundAllPostsById.pageSize,
                     totalCount: foundAllPostsById.totalCount,
-                    items: foundAllPostsById.items.map(getPostViewModel)
+                    items: foundAllPostsById.items.map((item)=>getPostViewModel(item))
                 })
 
 

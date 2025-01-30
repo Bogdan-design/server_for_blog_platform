@@ -2,7 +2,7 @@ import express from "express";
 import {HTTP_STATUSES} from "../../status.code";
 import {
     BlackLIstRefreshTokensModel,
-    BlogModel, CommentsModel, DevicesModel,
+    BlogModel, CommentsModel, DevicesModel, LikeForPostsModel, LikesModel,
     PasswordRecoveryModel,
     PostModel, SessionModel, UserModel,
 } from "../../db/mongo.db";
@@ -20,7 +20,9 @@ export const testingController = {
                 BlackLIstRefreshTokensModel.deleteMany(),
                 DevicesModel.deleteMany(),
                 SessionModel.deleteMany(),
-                PasswordRecoveryModel.deleteMany()
+                PasswordRecoveryModel.deleteMany(),
+                LikesModel.deleteMany(),
+                LikeForPostsModel.deleteMany()
             ])
 
             res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)

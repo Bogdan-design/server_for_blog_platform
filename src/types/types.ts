@@ -25,6 +25,7 @@ export type PostType = {
     blogId: string;
     blogName: string;
     createdAt: string,
+    likesInfo:LikeInfoType
 }
 
 export type UserType = {
@@ -90,17 +91,24 @@ export type BlackListRefreshTokensType = {
     refreshToken: string
 }
 
-export type LikeType={
+export type LikeForPostType = {
+    addedAt:string
+    status:LikeStatusEnum
+    userId:string
+    login:string
+    postId:string
+}
+
+export type LikeForCommentType ={
     createdAt: string
-    status: LikeStatus
+    status: LikeStatusEnum
     authorId: string
-    parentId: string
+    commentId: string
 }
 
 export type LikeInfoType = {
     likesCount: number
     dislikesCount: number
-    myStatus: LikeStatus
 }
 
 export type CommentType = {
@@ -112,7 +120,6 @@ export type CommentType = {
         userLogin: string
     }
     createdAt: string
-    likes: LikeType[]
     likesInfo: LikeInfoType
 }
 
@@ -132,8 +139,8 @@ export type RequestWithParamsAndBody<T, B> = Request<T, {}, B>
 export type RequestWithParamsAndQuery<T, B> = Request<T, {}, {}, B>
 
 
-export enum LikeStatus {
-    like = 'like',
-    dislike = 'dislike',
-    None = 'None'
+export enum LikeStatusEnum {
+    lIKE = 'Like',
+    DISLIKE = 'Dislike',
+    NONE = 'None'
 }

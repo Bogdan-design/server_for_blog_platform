@@ -1,6 +1,6 @@
-import {ObjectId} from "mongodb";
-import {CommentType} from "../../types/types";
-import {CommentsModel} from "../../db/mongo.db";
+import {ObjectId, WithId} from "mongodb";
+import {CommentType, LikeForCommentType,LikeStatusEnum} from "../../types/types";
+import {CommentsModel, LikesModel} from "../../db/mongo.db";
 
 export class CommentsRepository {
     async createComment(newComment: CommentType) {
@@ -41,15 +41,22 @@ export class CommentsRepository {
         const filter: any = postId ? {postId: {$regex: postId}} : {}
         return CommentsModel.countDocuments(filter)
     }
-    async updateLikeStatusForComment({commentId, userId, likeStatus}: { commentId: string, userId: string, likeStatus: string }) {
-        const result = await CommentsModel.updateOne({_id: new ObjectId(commentId)}, {
-            $set: {
-                "likeInfo.likesCount": likeStatus === 'like' ? 1 : 0,
-                "likeInfo.dislikesCount": likeStatus === 'dislike' ? 1 : 0,
-                "likeInfo.myStatus": likeStatus
-            }
-        })
-        return result
+    async saveLike(newLike: LikeForCommentType) {
+        return LikesModel.insertMany([newLike])
+    }
+    async getPreviousLike(userId: string, commentId: string) {
+        return LikesModel.findOne({authorId: userId, commentId: commentId})
+    }
+    async getAllLikes(){
+        return LikesModel.find().lean()
+    }
+    async updateLikeStatusForComment(comment: any) {
+
+        comment.save()
+        return comment
+    }
+    async deleteLike(userId: string, likeId: string) {
+        return LikesModel.deleteOne({authorId: userId, _id: new ObjectId(likeId)})
     }
 
 }

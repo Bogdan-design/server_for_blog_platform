@@ -1,12 +1,10 @@
 import {emailsManager} from "../../managers/email.manager";
 import {v4 as uuidv4} from "uuid";
-import {UsersRepository} from "src/features/users/usersRepository";
+import {UsersRepository} from "../../features/users/usersRepository";
 
-export class authService {
-    repositoryUsers: UsersRepository
+export class AuthService {
 
-    constructor() {
-        this.repositoryUsers = new UsersRepository()
+    constructor(protected repositoryUsers: UsersRepository) {
     }
 
     async confirmEmail(code: string) {

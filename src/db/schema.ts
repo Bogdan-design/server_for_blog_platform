@@ -3,10 +3,9 @@ import {
     BlackListRefreshTokensType,
     BlogType,
     CommentType, DeviceSessionDBType,
-    LikeInfoType, LikeStatus,
+    LikeInfoType, LikeStatusEnum,
     PostType,
-    RecoveryPasswordCodeModelType, SessionType,
-    UserDBType,
+    RecoveryPasswordCodeModelType, SessionType, UserDBType,
     UserType
 } from "../types/types";
 
@@ -19,6 +18,10 @@ export const BlogSchema = new mongoose.Schema<BlogType>({
     isMembership: {type: Boolean, required: true},
 });
 
+export const LikeInfoSchema = new mongoose.Schema<LikeInfoType>({
+    likesCount: {type: Number, required: true},
+    dislikesCount: {type: Number, required: true},
+})
 export const PostSchema = new mongoose.Schema<PostType>({
     id: String,
     title: {type: String, required: true},
@@ -26,23 +29,29 @@ export const PostSchema = new mongoose.Schema<PostType>({
     content: {type: String, required: true},
     blogId: {type: String, required: true},
     blogName: {type: String, required: true},
-    createdAt: {type: String, required: true}
+    createdAt: {type: String, required: true},
+    likesInfo: {type: LikeInfoSchema, required: true}
 })
 
-export const likesSchema = new mongoose.Schema({
+export const LikesForPosts = new mongoose.Schema({
+    addedAt:{type:String,required:true},
+    status:{type:String,required:true},
+    userId:{type:String,required:true},
+    login:{type:String,required:true},
+    postId:{type:String,required:true}
+
+})
+
+
+export const LikesSchema = new mongoose.Schema({
         createdAt: {type: Date, required: true},
-        status: {type: LikeStatus, required: true},
+        status: {type: String, enum: Object.values(LikeStatusEnum), required: true},
         authorId: {type: String, required: true},
-        parentId: {type: String, required: true},
-    } // commentId, postId, etc..
+        commentId: {type: String, required: true},
+    }
 )
 
 
-export const LikeInfoSchema = new mongoose.Schema<LikeInfoType>({
-    likesCount: {type: Number, required: true},
-    dislikesCount: {type: Number, required: true},
-    myStatus: {type: String, required: true}
-})
 
 export const CommentsSchema = new mongoose.Schema<CommentType>({
     id: String,
@@ -53,8 +62,7 @@ export const CommentsSchema = new mongoose.Schema<CommentType>({
         userLogin: {type: String, required: true}
     },
     createdAt: {type: String, required: true},
-    likes: {type: [likesSchema]},
-    likesInfo: {type: LikeInfoSchema}
+    likesInfo: {type: LikeInfoSchema, required: true}
 })
 
 export const PasswordRecoverySchema = new mongoose.Schema<RecoveryPasswordCodeModelType>({

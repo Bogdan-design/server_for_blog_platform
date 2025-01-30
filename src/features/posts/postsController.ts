@@ -2,7 +2,7 @@ import {Response, Router} from "express";
 import {ObjectId, WithId} from "mongodb";
 import {HTTP_STATUSES} from "../../status.code";
 import {
-    ExpectedErrorObjectType,
+    ExpectedErrorObjectType, LikeForPostType, LikeStatusEnum,
     ObjectModelFromDB,
     PostType,
     RequestWithParams,
@@ -22,7 +22,10 @@ import {PostsRepository} from "./postsRepository";
 import {BlogsService} from "../../features/blogs/blogsService";
 
 
-export const getPostViewModel = (dbPost: WithId<PostType>): PostType => {
+export const getPostViewModel = (
+    dbPost: WithId<PostType>,
+    likeStatus?:LikeStatusEnum,likes?:LikeForPostType[]):
+    PostType & {myStatus:LikeStatusEnum} & {newestLikes:Array<{addedAt:string,userId:string,login:string}>} => {
 
     return {
         id: dbPost._id.toString(),
@@ -32,6 +35,18 @@ export const getPostViewModel = (dbPost: WithId<PostType>): PostType => {
         blogId: dbPost.blogId,
         blogName: dbPost.blogName,
         createdAt: dbPost.createdAt,
+        likesInfo:{
+            dislikesCount:dbPost.likesInfo.dislikesCount,
+            likesCount:dbPost.likesInfo.likesCount
+        },
+        myStatus:likeStatus? likeStatus : LikeStatusEnum.NONE,
+        newestLikes:likes? likes.map(like=>{
+            return {
+                addedAt: like.addedAt,
+                userId:like.userId,
+                login:like.login
+            }
+        }) :[]
     }
 }
 
@@ -47,6 +62,47 @@ export class PostsController {
         this.postsRepository = new PostsRepository()
         this.blogsService = new BlogsService()
         this.commentsService = new CommentsService()
+    }
+
+    async createLikesForPost(req: RequestWithParamsAndBody<{ postId: string }, {
+        likeStatus: LikeStatusEnum
+    }> & { user: WithId<UserType> }, res: Response<any>) {
+
+        try {
+            const postId = req.params.postId
+            const user = req.user
+            const likeStatus = req.body.likeStatus
+
+            if (!postId) {
+                res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+                return
+            }
+            const post = await this.postsRepository.findPostByPostId(postId)
+            if (!post) {
+                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+                return
+            }
+
+            const result = await this.postsService.createLikeEntity({
+                userId:user._id.toString(),
+                postId,
+                likeStatus,
+                login: user.login
+            })
+            if (!result[0]) {
+                res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
+                return
+            }
+
+            res.sendStatus(HTTP_STATUSES.NO_CONTENT_204)
+            return
+
+        } catch (e) {
+            console.log(`create like error ${e}`)
+            res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
+            return
+        }
+
     }
 
     async getPosts(req: any, res: Response<ObjectModelFromDB<PostType> | { error: string }>) {
@@ -66,6 +122,7 @@ export class PostsController {
                 sortDirection
             )
 
+
             res
                 .status(HTTP_STATUSES.OK_200)
                 .json({
@@ -73,7 +130,7 @@ export class PostsController {
                     page: postsFromDB.page,
                     pageSize: postsFromDB.pageSize,
                     totalCount: postsFromDB.totalCount,
-                    items: postsFromDB.items.map(getPostViewModel)
+                    items: postsFromDB.items.map((item)=>getPostViewModel(item))
                 })
 
 
@@ -117,7 +174,7 @@ export class PostsController {
             }
             const newPost = newPostObject(req, blogId, blogForNewPost)
 
-            const {result, createdNewPost} = await this.postsService.createPost(newPost,)
+            const result = await this.postsService.createPost(newPost,)
 
             if (!result[0]) {
                 res
@@ -125,17 +182,12 @@ export class PostsController {
                     .json({error: 'Cannot create Post'})
                 return
             }
-            if (!createdNewPost) {
-                res
-                    .status(HTTP_STATUSES.NOT_FOUND_404)
-                    .json({error: 'Cannot find Post'})
-                return
-            }
+
 
 
             res
                 .status(HTTP_STATUSES.CREATED_201)
-                .json(getPostViewModel(createdNewPost));
+                .json(getPostViewModel(result[0]));
             return
 
         } catch (e) {
@@ -150,19 +202,28 @@ export class PostsController {
     }
 
 
-    async findPost(req: RequestWithParams<PostParamsType>, res: Response<PostType | { error: string }>) {
+    async findPost(req: RequestWithParams<PostParamsType>&{userId:WithId<UserType>}, res: Response<PostType | { error: string }>) {
         try {
-
+            const userId = req.userId
             const postId = req.params.id;
+            let myStatus : LikeStatusEnum = LikeStatusEnum.NONE
+            if (userId) {
+                const like = await this.postsRepository.getPreviousLike(userId.toString(),postId)
+                myStatus = like ? like.status :LikeStatusEnum.NONE
+            }
+
             if (!ObjectId.isValid(postId)) {
                 res.status(HTTP_STATUSES.NOT_FOUND_404).json({error: "Invalid post ID"});
                 return;
             }
 
-            const findPostsById = await this.postsRepository.findPostByPostId(postId)
+            const post = await this.postsRepository.findPostByPostId(postId)
+
+            const Likes = await this.postsRepository.findAllLikesForPost(postId)
 
 
-            if (!findPostsById) {
+
+            if (!post) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
                     .json({error: "Post not found"})
@@ -171,7 +232,7 @@ export class PostsController {
 
             res
                 .status(HTTP_STATUSES.OK_200)
-                .json(getPostViewModel(findPostsById));
+                .json(getPostViewModel(post,myStatus,Likes));
             return
 
         } catch (e) {
@@ -257,7 +318,11 @@ export class PostsController {
                 return;
             }
 
-            const {comment, result} = await this.postsService.createComment({postId: id, content: req.body.content, userId});
+            const {comment, result} = await this.postsService.createComment({
+                postId: id,
+                content: req.body.content,
+                userId
+            });
 
             if (!result[0]) {
                 res

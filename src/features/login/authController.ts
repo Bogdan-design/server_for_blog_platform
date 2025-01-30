@@ -4,29 +4,23 @@ import {HTTP_STATUSES} from "../../status.code";
 import {JwtService} from "../../application/jwtService";
 import {CreateUserModel} from "../../features/users/models/CreateUserModel";
 import {WithId} from "mongodb";
-import {authService} from "../../features/login/authService";
+import {AuthService} from "../../features/login/authService";
 import {SecurityService} from "../../features/security/securityService";
 import {repositoryTokens} from "../../application/repository.tokens";
 import {AuthLoginModel} from "../../features/login/models/AuthLoginModel";
 import {SecurityRepository} from "../../features/security/securityRepository";
 import {UsersService} from "../../features/users/usersService";
-import {UsersRepository} from "src/features/users/usersRepository";
+import {UsersRepository} from "../../features/users/usersRepository";
 
 export class AuthController  {
-    authService: authService
-    usersService: UsersService
-    usersRepository: UsersRepository
-    jwtService: JwtService
-    securityService: SecurityService
-    securityRepository: SecurityRepository
 
-    constructor(){
-        this.authService = new authService()
-        this.usersService = new UsersService()
-        this.usersRepository = new UsersRepository()
-        this.jwtService = new JwtService()
-        this.securityService = new SecurityService()
-        this.securityRepository = new SecurityRepository()
+    constructor(protected authService: AuthService,
+                protected usersService: UsersService,
+                protected usersRepository: UsersRepository,
+                protected jwtService: JwtService,
+                protected securityService: SecurityService,
+                protected securityRepository: SecurityRepository) {
+
     }
 
     async login(req: RequestWithBody<AuthLoginModel>, res: Response<any>) {

@@ -2,7 +2,9 @@ import {
     BlackListRefreshTokensType,
     BlogType,
     CommentType,
-    DeviceSessionDBType, LikeType,
+    DeviceSessionDBType,
+    LikeForCommentType,
+    LikeForPostType,
     PostType,
     RecoveryPasswordCodeModelType,
     SessionType,
@@ -14,7 +16,9 @@ import {
     BlackListRefreshTokenSchema,
     BlogSchema,
     CommentsSchema,
-    DeviceSessionSchema, likesSchema,
+    DeviceSessionSchema,
+    LikesForPosts,
+    LikesSchema,
     PasswordRecoverySchema,
     PostSchema,
     SessionSchema,
@@ -41,7 +45,8 @@ export const BlackLIstRefreshTokensModel  = mongoose.model<BlackListRefreshToken
 export const DevicesModel = mongoose.model<DeviceSessionDBType>(SETTINGS.SECURITY, DeviceSessionSchema)
 export const SessionModel = mongoose.model<SessionType>(SETTINGS.SESSIONS, SessionSchema)
 export const PasswordRecoveryModel = mongoose.model<RecoveryPasswordCodeModelType>(SETTINGS.RECOVERY_PASSWORD, PasswordRecoverySchema)
-export const LikesModel = mongoose.model<LikeType>(SETTINGS.LIKES, likesSchema)
+export const LikesModel = mongoose.model<LikeForCommentType>(SETTINGS.LIKES, LikesSchema)
+export const LikeForPostsModel = mongoose.model<LikeForPostType>(SETTINGS.POSTS_LIKES,LikesForPosts)
 
 
 

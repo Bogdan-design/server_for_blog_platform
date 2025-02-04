@@ -13,9 +13,10 @@ import {BlogParamsType} from "../../features/blogs/models/URIParamsBlogIdModels"
 import {UpdateBlogModel} from "../../features/blogs/models/UpdateBlogModel";
 import {ObjectId, WithId} from "mongodb";
 import {paginationQueries} from "../../helpers/paginationQuereis";
-import {getPostViewModel} from "../../features/posts/postsController";
 import {PostsService} from "../../features/posts/postsService";
 import {BlogsService} from "./blogsService";
+import {mappingAllPosts} from "../../features/posts/utils/mappingAllPosts";
+import {PostsRepository} from "../../features/posts/postsRepository";
 
 
 const getBlogViewModel = (dbBlog: WithId<BlogType & { __v: number }>): BlogType => {
@@ -33,10 +34,12 @@ export class BlogsController {
 
     blogsService: BlogsService
     postsService: PostsService
+    postsRepository: PostsRepository
 
     constructor() {
         this.blogsService = new BlogsService()
         this.postsService = new PostsService()
+        this.postsRepository = new PostsRepository()
     }
 
     async getBlogs(req: any, res: Response<ObjectModelFromDB<BlogType> | { error: string }>): Promise<void> {
@@ -123,6 +126,7 @@ export class BlogsController {
         //RequestWithParamsAndQuery<{blogId:string},QueryPostModel>
         try {
             const blogId = req.params.blogId
+            const userId = req.userId
             if (!blogId || typeof blogId !== "string" || !ObjectId.isValid(blogId)) {
                 res
                     .status(HTTP_STATUSES.NOT_FOUND_404)
@@ -158,14 +162,25 @@ export class BlogsController {
                     .json({error: 'Blog not found'})
                 return
             }
+
+            const likes = await this.postsRepository.findAllLikesForPost()
+
+
+
+
+
+
+
+
             res
                 .status(HTTP_STATUSES.OK_200)
                 .json({
-                    pagesCount: foundAllPostsById.pageCount,
+                    pagesCount: foundAllPostsById.pagesCount,
                     page: foundAllPostsById.page,
                     pageSize: foundAllPostsById.pageSize,
                     totalCount: foundAllPostsById.totalCount,
-                    items: foundAllPostsById.items.map((item)=>getPostViewModel(item))
+                    items: foundAllPostsById.items.map((
+                        item)=>mappingAllPosts(item,likes,foundAllPostsById,userId))
                 })
 
 

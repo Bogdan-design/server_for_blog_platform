@@ -9,7 +9,7 @@ export const newPostObject = (req: RequestWithBody<CreatePostByBlogIdParamsModel
         blogId: blogId,
         blogName: blogForNewPost.name,
         createdAt: new Date().toISOString(),
-        likesInfo:{
+        extendedLikesInfo:{
             likesCount:0,
             dislikesCount:0
         }

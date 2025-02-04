@@ -87,19 +87,7 @@ export class CommentsService {
         if (previousLikeByUser) {
             if (previousLikeByUser.status === likeStatus) {
 
-                //  await this.commentsRepository.deleteLike(userId, previousLikeByUser._id.toString());
-                //
-                //
-                // if (likeStatus === LikeStatusEnum.lIKE) {
-                //     comment.likesInfo.likesCount;
-                //
-                // }
-                // if (likeStatus === LikeStatusEnum.DISLIKE) {
-                //     comment.likesInfo.dislikesCount;
-                //
-                // }
-                // // comment.likesInfo.myStatus = likeStatus;
-                return await this.commentsRepository.updateLikeStatusForComment(comment)
+                return comment
             } else if (likeStatus === LikeStatusEnum.NONE) {
                 await this.commentsRepository.deleteLike(userId, previousLikeByUser._id.toString());
                 if (previousLikeByUser.status === LikeStatusEnum.lIKE) {
@@ -121,7 +109,6 @@ export class CommentsService {
                     comment.likesInfo.likesCount--;
                 }
 
-                // comment.likesInfo.myStatus = likeStatus;
 
                 const like = await this.commentsRepository.saveLike(newLike)
 
@@ -136,7 +123,6 @@ export class CommentsService {
             if (likeStatus === LikeStatusEnum.DISLIKE) {
                 comment.likesInfo.dislikesCount++;
             }
-            // comment.likesInfo.myStatus = likeStatus;
 
 
             const like = await this.commentsRepository.saveLike(newLike)

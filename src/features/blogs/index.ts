@@ -7,6 +7,7 @@ import {authMiddleware} from "../../middlewares/authMiddleware";
 import {PostsController} from "../../features/posts/postsController";
 import {Router} from "express";
 import {BlogsController} from "./blogsController";
+import {softBearerMiddleware} from "../../middlewares/softBearerMiddleware";
 
 export const blogsRouter = Router()
 
@@ -15,7 +16,7 @@ const postsController = new PostsController()
 
 blogsRouter.get('/', errorsMiddleware, blogsController.getBlogs.bind(blogsController));
 blogsRouter.post('/', authMiddleware, blogInputValidationBodyMiddleware, blogsController.createBlog.bind(blogsController));
-blogsRouter.get('/:blogId/posts', errorsMiddleware, blogsController.findAllPostsForBlog.bind(blogsController));
+blogsRouter.get('/:blogId/posts',softBearerMiddleware, errorsMiddleware, blogsController.findAllPostsForBlog.bind(blogsController));
 blogsRouter.post('/:blogId/posts',authMiddleware,postInputValidationBodyMiddleware, postsController.createPost.bind(postsController));
 blogsRouter.get('/:id', idValidation, errorsMiddleware, blogsController.findBlog.bind(blogsController));
 blogsRouter.put('/:id', authMiddleware, idValidation, blogInputValidationBodyMiddleware, blogsController.updateBlog.bind(blogsController));

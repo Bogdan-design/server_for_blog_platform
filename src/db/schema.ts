@@ -30,10 +30,10 @@ export const PostSchema = new mongoose.Schema<PostType>({
     blogId: {type: String, required: true},
     blogName: {type: String, required: true},
     createdAt: {type: String, required: true},
-    likesInfo: {type: LikeInfoSchema, required: true}
+    extendedLikesInfo: {type: LikeInfoSchema, required: true}
 })
 
-export const LikesForPosts = new mongoose.Schema({
+export const LikesForPostsSchema = new mongoose.Schema({
     addedAt:{type:String,required:true},
     status:{type:String,required:true},
     userId:{type:String,required:true},

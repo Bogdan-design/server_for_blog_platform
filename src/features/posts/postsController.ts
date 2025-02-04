@@ -1,13 +1,16 @@
-import {Response, Router} from "express";
+import {Response} from "express";
 import {ObjectId, WithId} from "mongodb";
 import {HTTP_STATUSES} from "../../status.code";
 import {
-    ExpectedErrorObjectType, LikeForPostType, LikeStatusEnum,
+    ExpectedErrorObjectType,
+    LikeStatusEnum,
+    NewestLikeType,
     ObjectModelFromDB,
     PostType,
     RequestWithParams,
     RequestWithParamsAndBody,
     RequestWithParamsAndQuery,
+    UserDBType,
     UserType
 } from "../../types/types";
 import {PostParamsType} from "../../features/posts/models/URIParamsPostIdModels";
@@ -20,35 +23,9 @@ import {paginationQueryForQueries} from "../../helpers/paginationQuereisFroComme
 import {PostsService} from "./postsService";
 import {PostsRepository} from "./postsRepository";
 import {BlogsService} from "../../features/blogs/blogsService";
+import {mappingAllPosts} from "./utils/mappingAllPosts";
+import {getPostViewModel} from "./utils/getPostViewModel";
 
-
-export const getPostViewModel = (
-    dbPost: WithId<PostType>,
-    likeStatus?:LikeStatusEnum,likes?:LikeForPostType[]):
-    PostType & {myStatus:LikeStatusEnum} & {newestLikes:Array<{addedAt:string,userId:string,login:string}>} => {
-
-    return {
-        id: dbPost._id.toString(),
-        title: dbPost.title,
-        shortDescription: dbPost.shortDescription,
-        content: dbPost.content,
-        blogId: dbPost.blogId,
-        blogName: dbPost.blogName,
-        createdAt: dbPost.createdAt,
-        likesInfo:{
-            dislikesCount:dbPost.likesInfo.dislikesCount,
-            likesCount:dbPost.likesInfo.likesCount
-        },
-        myStatus:likeStatus? likeStatus : LikeStatusEnum.NONE,
-        newestLikes:likes? likes.map(like=>{
-            return {
-                addedAt: like.addedAt,
-                userId:like.userId,
-                login:like.login
-            }
-        }) :[]
-    }
-}
 
 export class PostsController {
 
@@ -66,30 +43,32 @@ export class PostsController {
 
     async createLikesForPost(req: RequestWithParamsAndBody<{ postId: string }, {
         likeStatus: LikeStatusEnum
-    }> & { user: WithId<UserType> }, res: Response<any>) {
+    }> & { user: WithId<UserDBType> }, res: Response<any>) {
 
         try {
             const postId = req.params.postId
             const user = req.user
             const likeStatus = req.body.likeStatus
-
             if (!postId) {
                 res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
                 return
             }
+
+
             const post = await this.postsRepository.findPostByPostId(postId)
+
             if (!post) {
                 res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
             }
 
             const result = await this.postsService.createLikeEntity({
-                userId:user._id.toString(),
+                userId: user._id.toString(),
                 postId,
                 likeStatus,
-                login: user.login
+                login: user.accountData.login
             })
-            if (!result[0]) {
+            if (!result) {
                 res.sendStatus(HTTP_STATUSES.NOT_FOUND_404)
                 return
             }
@@ -106,8 +85,9 @@ export class PostsController {
     }
 
     async getPosts(req: any, res: Response<ObjectModelFromDB<PostType> | { error: string }>) {
-
         try {
+
+            const userId = req.userId
             const {
                 pageSize,
                 sortBy,
@@ -122,15 +102,21 @@ export class PostsController {
                 sortDirection
             )
 
+            const likes = await this.postsRepository.findAllLikesForPost()
+
+
+
+
 
             res
                 .status(HTTP_STATUSES.OK_200)
                 .json({
-                    pagesCount: postsFromDB.pageCount,
+                    pagesCount: postsFromDB.pagesCount,
                     page: postsFromDB.page,
                     pageSize: postsFromDB.pageSize,
                     totalCount: postsFromDB.totalCount,
-                    items: postsFromDB.items.map((item)=>getPostViewModel(item))
+                    items: postsFromDB.items.map((
+                        item)=>mappingAllPosts(item,likes,postsFromDB,userId))
                 })
 
 
@@ -174,7 +160,7 @@ export class PostsController {
             }
             const newPost = newPostObject(req, blogId, blogForNewPost)
 
-            const result = await this.postsService.createPost(newPost,)
+            const result = await this.postsService.createPost(newPost)
 
             if (!result[0]) {
                 res
@@ -182,7 +168,6 @@ export class PostsController {
                     .json({error: 'Cannot create Post'})
                 return
             }
-
 
 
             res
@@ -202,14 +187,17 @@ export class PostsController {
     }
 
 
-    async findPost(req: RequestWithParams<PostParamsType>&{userId:WithId<UserType>}, res: Response<PostType | { error: string }>) {
+    async findPost(req: RequestWithParams<PostParamsType> & { userId: ObjectId }, res: Response<PostType | {
+        error: string
+    }>) {
         try {
-            const userId = req.userId
             const postId = req.params.id;
-            let myStatus : LikeStatusEnum = LikeStatusEnum.NONE
+            const userId = req.userId
+
+            let myStatus: LikeStatusEnum = LikeStatusEnum.NONE
             if (userId) {
-                const like = await this.postsRepository.getPreviousLike(userId.toString(),postId)
-                myStatus = like ? like.status :LikeStatusEnum.NONE
+                const like = await this.postsRepository.getPreviousLike(userId.toString(), postId)
+                myStatus = like ? like.status : LikeStatusEnum.NONE
             }
 
             if (!ObjectId.isValid(postId)) {
@@ -219,7 +207,7 @@ export class PostsController {
 
             const post = await this.postsRepository.findPostByPostId(postId)
 
-            const Likes = await this.postsRepository.findAllLikesForPost(postId)
+            const likes = await this.postsRepository.findAllLikesForPost(postId)
 
 
 
@@ -232,11 +220,12 @@ export class PostsController {
 
             res
                 .status(HTTP_STATUSES.OK_200)
-                .json(getPostViewModel(post,myStatus,Likes));
+                .json(getPostViewModel(post,myStatus, likes));
             return
 
         } catch (e) {
             console.error("Error finding post:", e);
+
             res
                 .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500)
                 .json({error: "Internal Server Error"});

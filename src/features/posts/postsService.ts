@@ -22,6 +22,12 @@ export class PostsService {
         login: string,
         likeStatus: LikeStatusEnum
     }) {
+
+        let post: PostType
+        post = await this.postsRepository.findPostByPostId(postId)
+        if (!post) return null
+
+
         const newLikeForPost: LikeForPostType = {
             addedAt: new Date().toISOString(),
             status: likeStatus,
@@ -29,10 +35,64 @@ export class PostsService {
             postId,
             userId
         }
-        const result = await this.postsRepository.createLikeForPost(newLikeForPost)
-        return result
-    }
 
+        const likeByUser = await this.postsRepository.getPreviousLike(userId, postId)
+
+        if (likeByUser) {
+            if (likeByUser.status === likeStatus) {
+
+                return post
+            } else if (likeStatus === LikeStatusEnum.NONE) {
+
+                await this.postsRepository.updateLikeStatus(likeByUser._id.toString(),likeStatus)
+
+                if (likeByUser.status === LikeStatusEnum.lIKE) {
+                    post.extendedLikesInfo.likesCount--;
+                } else if (likeByUser.status === LikeStatusEnum.DISLIKE) {
+                    post.extendedLikesInfo.dislikesCount--;
+                }
+
+                return await this.postsRepository.updateLikeForPost(post)
+
+            } else {
+                // await this.postsRepository.deleteLikeByUserId(userId)
+                if (likeStatus === LikeStatusEnum.lIKE) {
+                    post.extendedLikesInfo.likesCount++;
+                    if(post.extendedLikesInfo.dislikesCount>0) {
+                        post.extendedLikesInfo.dislikesCount--;
+                    }
+                } else if (likeStatus === LikeStatusEnum.DISLIKE) {
+                    post.extendedLikesInfo.dislikesCount++;
+                    if(post.extendedLikesInfo.likesCount>0) {
+                        post.extendedLikesInfo.likesCount--;
+                    }
+                }
+
+                await this.postsRepository.updateLikeStatus(likeByUser._id.toString(),likeStatus)
+                // const like = await this.postsRepository.createLikeForPost(newLikeForPost)
+                //
+                // if (!like) return null
+
+                return await this.postsRepository.updateLikeForPost(post)
+            }
+        } else {
+            if (likeStatus === LikeStatusEnum.lIKE) {
+                post.extendedLikesInfo.likesCount++;
+            }
+            if (likeStatus === LikeStatusEnum.DISLIKE) {
+                post.extendedLikesInfo.dislikesCount++;
+            }
+
+
+
+            const like = await this.postsRepository.createLikeForPost(newLikeForPost)
+
+            if (!like) return null
+            return await this.postsRepository.updateLikeForPost(post)
+        }
+
+
+    }
 
     async getPosts(
         pageNumber: number,
@@ -52,7 +112,7 @@ export class PostsService {
         const postsCount = await this.postsRepository.getPostCount(blogId)
 
         return {
-            pageCount: Math.ceil(postsCount / pageSize),
+            pagesCount: Math.ceil(postsCount / pageSize),
             page: pageNumber,
             pageSize,
             totalCount: postsCount,

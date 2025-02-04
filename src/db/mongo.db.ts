@@ -17,7 +17,7 @@ import {
     BlogSchema,
     CommentsSchema,
     DeviceSessionSchema,
-    LikesForPosts,
+    LikesForPostsSchema,
     LikesSchema,
     PasswordRecoverySchema,
     PostSchema,
@@ -46,7 +46,7 @@ export const DevicesModel = mongoose.model<DeviceSessionDBType>(SETTINGS.SECURIT
 export const SessionModel = mongoose.model<SessionType>(SETTINGS.SESSIONS, SessionSchema)
 export const PasswordRecoveryModel = mongoose.model<RecoveryPasswordCodeModelType>(SETTINGS.RECOVERY_PASSWORD, PasswordRecoverySchema)
 export const LikesModel = mongoose.model<LikeForCommentType>(SETTINGS.LIKES, LikesSchema)
-export const LikeForPostsModel = mongoose.model<LikeForPostType>(SETTINGS.POSTS_LIKES,LikesForPosts)
+export const LikeForPostsModel = mongoose.model<LikeForPostType>(SETTINGS.POSTS_LIKES,LikesForPostsSchema)
 
 
 

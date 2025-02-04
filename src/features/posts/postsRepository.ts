@@ -10,8 +10,18 @@ export class PostsRepository {
     async getPreviousLike(userId: string, postId: string){
         return LikeForPostsModel.findOne({userId,postId})
     }
-    async findAllLikesForPost(postId:string){
-        return LikeForPostsModel.find({postId}).lean()
+    async findAllLikesForPost(postId?:string){
+
+        const filter = postId ? {postId}: {}
+        return LikeForPostsModel.find(filter).lean()
+    }
+    async deleteLikeByUserId(userId:string){
+        return LikeForPostsModel.deleteOne({userId})
+    }
+    async updateLikeForPost(post:any){
+
+        post.save()
+        return post
     }
     async getPosts(
         pageNumber: number,
@@ -20,7 +30,7 @@ export class PostsRepository {
         sortDirection: SortDirection,
         blogId?: string,
     ) {
-        const filter: any = blogId ? {blogId: {$regex: blogId}} : {}
+        const filter: any = blogId ? {blogId} : {}
 
         return PostModel
             .find(filter)
@@ -30,7 +40,7 @@ export class PostsRepository {
             .lean()
     }
     async getPostCount(blogId?: string) {
-        const filter: any = blogId ? {blogId: {$regex: blogId}} : {}
+        const filter: any = blogId ? {blogId} : {}
         return PostModel.countDocuments(filter)
     }
     async createPost(newPost: PostType) {
@@ -44,6 +54,9 @@ export class PostsRepository {
             {_id: new ObjectId(postId)},
             {$set: {...newBodyPost}},
         )
+    }
+    async updateLikeStatus(likeId:string,status:string){
+        return LikeForPostsModel.updateOne({_id: new ObjectId(likeId)},{status})
     }
     async deletePost(postId: string) {
         return PostModel.deleteOne({_id: new ObjectId(postId)})

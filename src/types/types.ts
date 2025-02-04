@@ -25,8 +25,26 @@ export type PostType = {
     blogId: string;
     blogName: string;
     createdAt: string,
-    likesInfo:LikeInfoType
+    extendedLikesInfo:LikeInfoType
 }
+
+export type NewestLikeType = {
+    addedAt: string;
+    userId: string;
+    login: string;
+    postId?: string
+}
+
+
+export type OutputPostModelType = PostType & {
+    extendedLikesInfo: {
+        likesCount: number;
+        dislikesCount: number;
+        myStatus: LikeStatusEnum;
+        newestLikes: Array<NewestLikeType>;
+    };
+};
+
 
 export type UserType = {
     id?: string
